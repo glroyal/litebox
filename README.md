@@ -2,8 +2,7 @@
 
 > An Adaptive Density Graphical Photo Browser powered by Computed HTML
 
-
-![litebox.jpg](/usr/local/var/www/litebox/litebox.jpg)
+![litebox.jpg](litebox.jpg)
 
 ## Overview
 
@@ -15,7 +14,7 @@
 
 ## You're Soaking In It
 
-[**View the live demo**](http://self) on your dektop, notebook, tablet and phone. The Q (quality) score for almost all photos on almost all devices will be 100%.
+[**View the Live Demo**](https://glroyal.github.io/litebox/) on your dektop, notebook, tablet and phone. The Q (quality) score for almost all photos on almost all devices will be 100%.
 
 Lower figures indicate there weren't enough pixels in the image to fill all the hardware pixels, and the browser upsampled the image to cover the gap. The visual quality will be no worse than standard, and possibly a bit better.
 
@@ -101,8 +100,6 @@ const catalog = [
 *Row* = the ordinal number of the item in the catalog array
 
 ## 
-
-
 
 ## Wisdom
 
