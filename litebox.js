@@ -17,7 +17,7 @@
  ***************************************************************************/
 
 var
-    last_width, columns_per_row, total_gutter_width, max_img_width, render_width, gallery_width, left_offset,page_length, total_pages, page_number, column_height;
+    last_width, columns_per_row, total_gutter_width, max_img_width, render_width, gallery_width, left_offset,page_length, total_pages, page_number, column_height, last_n;
 
 var
     window_width, window_height, scrollbar_width, viewport_width;
@@ -83,7 +83,7 @@ get_window_geometry = function(){
 
     viewport_width = window_width - scrollbar_width;
 
-}();
+};
 
 
 init = function(){
@@ -117,8 +117,10 @@ init = function(){
     if(DOWNLOAD_LIMIT) {
         catalog = catalog.slice(0,DOWNLOAD_LIMIT-1);
     }
+};
 
-}();
+get_window_geometry();
+init();
 
 
 function debounce(func) {
@@ -142,7 +144,13 @@ window.addEventListener("resize",debounce(function(e){
 
     if (viewport_width != last_width) {
 
-        init();
+         $('gallery').innerHTML='';
+         init();
+
+        if($('lightbox').style.display == 'block') {
+            lightbox_open(last_n);
+        }
+
         auto_paginate();
     }
 }));
@@ -344,6 +352,8 @@ function lightbox_open(n) { // n = ROW
         aspect = catalog[n][WIDTH] / catalog[n][HEIGHT],
         adr;
 
+        console.log('render');
+
     if(aspect < 1) {
 
         // portrait
@@ -361,6 +371,9 @@ function lightbox_open(n) { // n = ROW
         img_height = Math.ceil(img_width / aspect, 0);
     }
 
+    $('nfobox').style.top = (window_height-260)/2 + 'px';
+    $('nfobox').style.left = (window_width-260)/2 + 'px';
+
     $('nfobox').innerHTML = `
         <table>
             <tr><td class="stub">Picsum ID:</td><td class="col">#&thinsp;${catalog[n][ID]}</td></tr>
@@ -377,6 +390,8 @@ function lightbox_open(n) { // n = ROW
     $('lightbox').style.display = 'block';
     $('menu').style.visibility = 'visible';
     $('nfobox').style.visibility = 'hidden';
+
+    last_n = n;
 }
 
 
