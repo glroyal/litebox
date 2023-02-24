@@ -1,7 +1,7 @@
 /***************************************************************************
  *
- *   LiteBox
- *   An Adaptive Density Graphical Photo Browser powered by Computed HTML
+ *   LiteBox:
+ *   An Adaptive Density Graphical Photo Browser written in Computed HTML
  *   © Copyright Gary Royal 2022, 2023
  *
  *   This program is free software; you can redistribute it and/or modify
