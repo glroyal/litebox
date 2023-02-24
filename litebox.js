@@ -16,59 +16,25 @@
  *
  ***************************************************************************/
 
-get_window_geometry();
-
-
-const
-    last_width = viewport_width,
-
-    mobile = navigator.userAgent.toLowerCase().match(/mobile/i) ? true : false,
-
-    responsive_columns = [0,0,2,2,2,2,3,3,4,4,5,5,5,5,6,6,7,7,8,8,9],
-
-    columns_per_row = (viewport_width < 300) ? 1 : ((viewport_width > 2100) ? 12 : responsive_columns[Math.floor(viewport_width / 100)]);
-
-    gutter_size = 8,
-
-    total_gutter_width = (columns_per_row + 1) * gutter_size,
-
-    max_img_width = (Math.floor((viewport_width - total_gutter_width) / columns_per_row) * 4) / 4,
-
-    alt_max_width = 192, //
-
-    render_width = (max_img_width >= alt_max_width) ? alt_max_width : max_img_width,
-
-    gallery_width = (render_width * columns_per_row) + total_gutter_width,
-
-    left_offset = Math.floor((viewport_width - gallery_width) / 2),
-
-    dpr = devicePixelRatio,
-
-    WIDTH=0, HEIGHT=1, ID=2, AUTH=3, UNSPL=4, ROW=5, // pointers into the catalog
-
-    DOWNLOAD_LIMIT = 128,  // 0 = no limit
-
-    observer = lozad();
+var
+    last_width, columns_per_row, total_gutter_width, max_img_width, render_width, gallery_width, left_offset,page_length, total_pages, page_number, column_height;
 
 var
-    page_length = Math.ceil(window_height / render_width) * columns_per_row * 2,
+    window_width, window_height, scrollbar_width, viewport_width;
 
-    total_pages = Math.ceil(catalog.length / page_length),
+const
+    mobile = navigator.userAgent.toLowerCase().match(/mobile/i) ? true : false,
+    responsive_columns = [0,0,2,2,2,2,3,3,4,4,5,5,5,5,6,6,7,7,8,8,9],
+    gutter_size = 8,
+    alt_max_width = 192,
+    dpr = devicePixelRatio,
+    WIDTH=0, HEIGHT=1, ID=2, AUTH=3, UNSPL=4, ROW=5, // pointers into the catalog
+    DOWNLOAD_LIMIT = 128;  // 0 = no limit
 
-    page_number = 0,
-
-    column_height = new Array(columns_per_row);
-
-    column_height.fill(gutter_size);
-
-    // respect download limit as a courtesy to Picsum and Cloudflare
-
-    if(DOWNLOAD_LIMIT) {
-        catalog = catalog.slice(0,DOWNLOAD_LIMIT-1);
-    }
+observer = lozad();
 
 
-function get_window_geometry() {
+get_window_geometry = function(){
 
     window_width = function() {
         var x = 0;
@@ -116,7 +82,43 @@ function get_window_geometry() {
     }();
 
     viewport_width = window_width - scrollbar_width;
-};
+
+}();
+
+
+init = function(){
+
+    last_width = viewport_width,
+
+    columns_per_row = (viewport_width < 300) ? 1 : ((viewport_width > 2100) ? 12 : responsive_columns[Math.floor(viewport_width / 100)]);
+
+    total_gutter_width = (columns_per_row + 1) * gutter_size,
+
+    max_img_width = (Math.floor((viewport_width - total_gutter_width) / columns_per_row) * 4) / 4,
+
+    render_width = (max_img_width >= alt_max_width) ? alt_max_width : max_img_width,
+
+    gallery_width = (render_width * columns_per_row) + total_gutter_width,
+
+    left_offset = Math.floor((viewport_width - gallery_width) / 2);
+
+    //
+
+    page_length = Math.ceil(window_height / render_width) * columns_per_row * 2,
+
+    total_pages = Math.ceil(catalog.length / page_length),
+
+    page_number = 0,
+
+    column_height = new Array(columns_per_row);
+
+    column_height.fill(gutter_size);
+
+    if(DOWNLOAD_LIMIT) {
+        catalog = catalog.slice(0,DOWNLOAD_LIMIT-1);
+    }
+
+}();
 
 
 function debounce(func) {
@@ -139,7 +141,9 @@ window.addEventListener("resize",debounce(function(e){
     get_window_geometry();
 
     if (viewport_width != last_width) {
-        location.reload();
+
+        init();
+        auto_paginate();
     }
 }));
 
