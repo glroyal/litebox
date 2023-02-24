@@ -120,10 +120,6 @@ function init() {
 }
 
 
-get_window_geometry();
-init();
-
-
 function debounce(func) {
 
     // pause execution while window is being dragged
@@ -157,25 +153,6 @@ window.addEventListener("resize",debounce(function(e){
 }));
 
 
-function $(el) {
-    try {
-        return (typeof el == 'string') ? document.getElementById(el) : el;
-    } catch (e) {
-        if (debug) {
-            alert(el);
-        }
-    }
-}
-
-
-function Q(width, height, adr) {
-
-    // estimate rendition quality (%)
-
-    return Math.max(width*adr,height*adr) / Math.max(width*dpr,height*dpr) * 100;
-}
-
-
 function compute_adr(id, aspect, length) {
 
     // compute adaptive density ratio
@@ -187,6 +164,29 @@ function compute_adr(id, aspect, length) {
     }
 
     return adr;
+}
+
+
+function display_adr(width, height, adr) {
+
+    // percentage of screen pixels filled by image pixels
+    // under 100 = image upsampled by browser
+
+    return Math.max(width*adr,height*adr) / Math.max(width*dpr,height*dpr) * 100;
+}
+
+
+function $(el) {
+
+    // that handy $('foo') shortcut thing
+
+    try {
+        return (typeof el == 'string') ? document.getElementById(el) : el;
+    } catch (e) {
+        if (debug) {
+            alert(el);
+        }
+    }
 }
 
 
@@ -236,7 +236,7 @@ function auto_paginate() {
 
                 j = column_height.indexOf(Math.min(...column_height)),
 
-                // compute the optimum download resolution,
+                // compute the adaptive density ratio,
 
                 adr = (catalog[list[i]][WIDTH] <= render_width) ? 1 : compute_adr(list[i],WIDTH,render_width);
 
@@ -261,7 +261,7 @@ function auto_paginate() {
                 }');" onclick="lightbox_open(${
                     list[i]
                 });"><div class="brick-id">${
-                    Q(render_width,render_height,adr)
+                    display_adr(render_width,render_height,adr)
                 }</div></div>`;
 
                 // adjust the column height and continue with the next picture
@@ -350,7 +350,7 @@ function lightbox_open(n) { // n = ROW
             <tr><td class="stub">Image:</td><td class="col">${catalog[n][WIDTH]+'&thinsp;x&thinsp;'+catalog[n][HEIGHT]}</td></tr>
             <tr><td class="stub">Render:</td><td class="col">${Math.floor(img_width/adr) + '&thinsp;x&thinsp;' + Math.floor(img_height/adr)}</td></tr>
             <tr><td class="stub">Quality:</td><td class="col">${
-                Q(img_width, img_height, adr)
+                display_adr(img_width, img_height, adr)
             } %</td></tr>
         </table>`;
 
@@ -365,6 +365,9 @@ function lightbox_open(n) { // n = ROW
 
 
 // And Here We Go
+
+get_window_geometry();
+init();
 
 document.addEventListener("DOMContentLoaded", function(){
 
