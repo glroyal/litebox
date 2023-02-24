@@ -16,6 +16,8 @@
  *
  ***************************************************************************/
 
+// globals
+
 var
     last_width, columns_per_row, total_gutter_width, max_img_width, render_width, gallery_width, left_offset,page_length, total_pages, page_number, column_height, last_n;
 
@@ -23,7 +25,6 @@ var
     window_width, window_height, scrollbar_width, viewport_width;
 
 const
-    mobile = navigator.userAgent.toLowerCase().match(/mobile/i) ? true : false,
     responsive_columns = [0,0,2,2,2,2,3,3,4,4,5,5,5,5,6,6,7,7,8,8,9],
     gutter_size = 8,
     alt_max_width = 192,
@@ -31,10 +32,14 @@ const
     WIDTH=0, HEIGHT=1, ID=2, AUTH=3, UNSPL=4, ROW=5, // pointers into the catalog
     DOWNLOAD_LIMIT = 128;  // 0 = no limit
 
+if(DOWNLOAD_LIMIT) {
+    catalog = catalog.slice(0,DOWNLOAD_LIMIT-1);
+}
+
 observer = lozad();
 
 
-get_window_geometry = function(){
+function get_window_geometry() {
 
     window_width = function() {
         var x = 0;
@@ -82,11 +87,10 @@ get_window_geometry = function(){
     }();
 
     viewport_width = window_width - scrollbar_width;
+}
 
-};
 
-
-init = function(){
+function init() {
 
     last_width = viewport_width,
 
@@ -113,11 +117,8 @@ init = function(){
     column_height = new Array(columns_per_row);
 
     column_height.fill(gutter_size);
+}
 
-    if(DOWNLOAD_LIMIT) {
-        catalog = catalog.slice(0,DOWNLOAD_LIMIT-1);
-    }
-};
 
 get_window_geometry();
 init();
@@ -167,41 +168,9 @@ function $(el) {
 }
 
 
-function render_ui() {
-
-    $('form1').innerHTML = `
-    <div id="browser">
-        <header>
-            <nav class="left">
-                <span class="material-icons md-24 md-light md-inactive">menu</span>
-                <span class="logo">LiteBox</span>
-            </nav>
-            <nav></nav>
-            <nav></nav>
-        </header>
-        <div id="pga">
-            <div id="gallery"></div>
-        </div>
-    </div>
-
-    <div id="lightbox">
-        <div id="imgdiv" class="cover" onclick="nfobox_toggle();">
-            <img class="slide" id="img01" src="1x1.gif" onclick="">
-        </div>
-    </div>
-
-    <div id="nfobox" style="top:${(window_height-260)/2}px;left:${(window_width-260)/2}px;" onclick="nfobox_toggle();"></div>
-
-    <nav id="menu" class="menu" style="visibility:hidden;">
-        <span class="material-icons md-24 md-light" onclick="nfobox_toggle();">info_outline</span>
-        <span class="material-icons md-24 md-light" onclick="lightbox_close();">close</span>
-    </nav>`;
-}
-
-
 function Q(width, height, adr) {
 
-    // estimated rendition quality (%)
+    // estimate rendition quality (%)
 
     return Math.max(width*adr,height*adr) / Math.max(width*dpr,height*dpr) * 100;
 }
@@ -401,7 +370,33 @@ document.addEventListener("DOMContentLoaded", function(){
 
     // render the user interface
 
-    render_ui();
+    $('form1').innerHTML = `
+    <div id="browser">
+        <header>
+            <nav class="left">
+                <span class="material-icons md-24 md-light md-inactive">menu</span>
+                <span class="logo">LiteBox</span>
+            </nav>
+            <nav></nav>
+            <nav></nav>
+        </header>
+        <div id="pga">
+            <div id="gallery"></div>
+        </div>
+    </div>
+
+    <div id="lightbox">
+        <div id="imgdiv" class="cover" onclick="nfobox_toggle();">
+            <img class="slide" id="img01" src="1x1.gif" onclick="">
+        </div>
+    </div>
+
+    <div id="nfobox" style="top:${(window_height-260)/2}px;left:${(window_width-260)/2}px;" onclick="nfobox_toggle();"></div>
+
+    <nav id="menu" class="menu" style="visibility:hidden;">
+        <span class="material-icons md-24 md-light" onclick="nfobox_toggle();">info_outline</span>
+        <span class="material-icons md-24 md-light" onclick="lightbox_close();">close</span>
+    </nav>`;
 
     // fetch and render the next page on scroll
 
@@ -417,5 +412,4 @@ document.addEventListener("DOMContentLoaded", function(){
     }, false);
 
     auto_paginate(); // fetch and render the first page
-
 });
