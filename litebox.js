@@ -16,6 +16,8 @@
  *
  ***************************************************************************/
 
+const start = Date.now();
+
 // globals
 
 var
@@ -29,13 +31,20 @@ const
     gutter_size = 8,
     alt_max_width = 192,
     dpr = devicePixelRatio,
-    WIDTH=0, HEIGHT=1, ID=2, AUTH=3, UNSPL=4, ROW=5,
-    no=0, yes=1; // pointers into the catalog
+    WIDTH=0, HEIGHT=1, ID=2, AUTH=3, UNSPL=4, ROW=5, // pointers into the catalog
+    no=0, yes=1;
 
 // preferences
 
 const
-    PAGINATE = yes;
+    PAGINATE = no,
+    DOWNLOAD_LIMIT = 0;
+   // PAGE_LENGTH = catalog.length;
+
+if(DOWNLOAD_LIMIT) {
+    catalog = catalog.slice(0,DOWNLOAD_LIMIT-1);
+}
+
 
 
 observer = lozad();
@@ -200,16 +209,13 @@ function fetch_page() {
 
     var ll, rr;
 
-    if(page_number >= 0) {
+    if(page_number < total_pages) {
 
-        if(page_number < total_pages) {
+        ll = (page_number * page_length), rr = ll + page_length - 1;
 
-            ll = (page_number * page_length), rr = ll + page_length - 1;
-
-            return catalog.slice(ll, rr).map(function(value,index) {
-                return value[ROW];
-            });
-        }
+        return catalog.slice(ll, rr).map(function(value,index) {
+            return value[ROW];
+        });
 
     } else {
         return [];
@@ -219,11 +225,14 @@ function fetch_page() {
 
 function auto_paginate() {
 
+    const start = Date.now();
+
     // stream a page of thumbnail cards to the browser
 
     if(total_pages > 0) {
 
         var list = fetch_page();
+        //console.log(`list len=${list.length}`);
 
         if(list.length > 0) {
 
@@ -281,6 +290,9 @@ function auto_paginate() {
             el = document.createElement('div');
             el.innerHTML = chtml.join('');
             $('gallery').appendChild(el);
+
+            //const end = Date.now();
+            //console.log(`Execution time: ${end - start} ms`);
 
             // and lazy-load the photos
 
@@ -371,6 +383,32 @@ function lightbox_open(n) { // n = ROW
 }
 
 
+
+function crlf() {
+
+    var
+        top = column_height[column_height.indexOf(Math.max(...column_height))] + gutter_size,
+        k;
+
+    console.log(top);
+
+    for(k=0; k<columns_per_row-1; k++) {
+        column_height[k]  = top;
+    }
+
+    return top;
+}
+
+function echo(msg) {
+
+    var top = crlf();
+    var el = document.createElement('div');
+    el.innerHTML = [`<p style="position:absolute;top:${top}px;left:${left_offset}px;">${msg}<br><br></p>`].join('');
+    $('gallery').appendChild(el);
+    crlf();
+}
+
+
 // And Here We Go
 
 get_window_geometry();
@@ -409,21 +447,39 @@ document.addEventListener("DOMContentLoaded", function(){
     </nav>`;
 
     // fetch and render the next page on scroll
+
 /*
     $('pga').addEventListener("scroll", function () {
 
-        if ($('pga').scrollHeight - $('pga').scrollTop === $('pga').clientHeight) {
+        if(page_number >= 0) {
 
-            page_number++;
-            // page_number = (page_number>(total_pages-1)) ? total_pages-1 : page_number;
-            page_number = (page_number>(total_pages-1)) ? -1 : page_number;
-            auto_paginate();
+            if ($('pga').scrollHeight - $('pga').scrollTop === $('pga').clientHeight) {
+
+                page_number++;
+                // page_number = (page_number>(total_pages-1)) ? total_pages-1 : page_number;
+                page_number = (page_number>(total_pages-1)) ? -1 : page_number;
+                auto_paginate();
+            }
+
+        } else {
+
+//           const end = Date.now();
+//            echo(`${} thumbnails rendered in ${} ms`);
+//             const end = Date.now();
+//           console.log(`Execution time: ${end - start} ms`);
+
         }
+
 
     }, false);
 */
+
     auto_paginate(); // fetch and render the first page
     const end = Date.now();
-    console.log(`Execution time: ${end - start} ms`);
+    const t = end - start;
+    const num = (Math.ceil(1000/t) * catalog.length).toLocaleString();
+    const perflog = `Execution time = ${t} ms,<br> render speed ~= ${num} thumbs/sec`;
+    console.log(perflog);
+    echo(perflog);
 
 });
