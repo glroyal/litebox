@@ -6,11 +6,11 @@
 
 ## Overview
 
-**LiteBox** is a Graphical Photo Browser that renders photos with the finest practical image detail.
+**LiteBox** is a Graphical Photo Browser that renders photos with the finest practical image detail on all devices. 
 
-**Computed HTML** is a programming model in which the tags describing a complex layout are compiled in RAM, then passed to the browser's HTML interpreter to render in a single paint.
+It's written in **Computed HTML**, a programming model where the tags describing a layout are compiled in RAM, then passed to the browser's HTML interpreter to render.
 
-**Adaptive Density** is a strategy for optimizing image quality by adjusting the download resolution for each image to match the pixel density of the screen it's being displayed on. 
+It introduces **Adaptive Density**, a strategy for optimizing image quality by adjusting the download resolution for each image to match the pixel density of the screen it's being displayed on. 
 
 ## You're Soaking In It
 
@@ -24,38 +24,55 @@ Lower figures indicate there weren't enough pixels in the image to fill all the 
 
 * Drag the file index.html into an open browser window
 
-* Absorb what is useful, discard what is useless, and add what is specifically your own 
+* *"Absorb what is useful, discard what is useless, and add what is specifically your own"* 
+  -- Bruce Lee
 
 ## Computed HTML
 
-There is an HTML element property called [**innerHTML**]([Element.innerHTML - Web APIs | MDN](https://developer.mozilla.org/en-US/docs/Web/API/Element/innerHTML)), which allows you to read or write tranches of the DOM as a string of HTML tags.
+There is an element property called [**innerHTML**]([Element.innerHTML - Web APIs | MDN](https://developer.mozilla.org/en-US/docs/Web/API/Element/innerHTML)), which reads or writes tranches of the DOM as a string of HTML tags.
 
-You might have used it to do a live update of a widget or a time and date display, but it's possible to generate the entire front end by assembling tags in RAM and pushing them through innerHTML to render inside an empty DIV. 
+InnerHTML is orders of magnitude faster than JavaScript DOM because the browser's HTML interpreter is optimized for generating layouts from streams of markup tags.
 
-InnerHTML is orders of magnitude faster than JavaScript DOM because the browser's HTML interpreter is optimized for rendering layouts from streams of HTML tags.
+LiteBox weighs just 67K, but can render its catalog of 893 photos as thumbnails in 7  ms.
 
 ## Adaptive Density
 
-High-definition mobile video displays range from 1x (HD or below), 2x (Retina), 3x (Super Retina), 4x (xxxhdpi), and many intermediate sizes between.
+Adaptive Density is a common sense approach to image optimization.
 
-The HTML `srcset` attribute is based on the assumption that you will prerender all assets at different resolutions to accomodate devices with different pixel densities, but this is impractical for large and/or dynamic collections of media.
+The objective is to fill all of the screen pixels in a rendition with image pixels, either by downsampling an oversized image or upsampling an undersized image to match the device pixel ratio (DPR) of the display it's being viewed on, for each rendition of that image (thumbnail or fullscreen).
 
-Adaptive Density is a strategy for finding the greatest image pixel density below the device pixel density that matches both the picture and the screen at the requested presentation size.
+**Table 1: geometries of a small sample of video displays**
 
-Photos can then be downloaded from a scaling image server at the best resolution for the display it will be viewed on.
+| device                    | resolution | dpr  | ppi | viewport  |
+| ------------------------- | ---------- | ---- | --- | --------- |
+| 27" PC monitor            | 1920x1080  | 1.00 | 82  | 1920x1080 |
+| 9.7" iPad                 | 768x1024   | 1.00 | 132 | 768x1024  |
+| 27" iMac 2020             | 2560x1440  | 2.00 | 109 | 1280x720  |
+| 12.9" iPad Pro            | 2048x2732  | 2.00 | 264 | 1024x1366 |
+| 3.5" iPhone 4             | 640x960    | 2.00 | 326 | 320x480   |
+| 5.8" Pixel 4a             | 1080x2340  | 2.75 | 443 | 393x851   |
+| 6.1" iPhone 13            | 1170x2532  | 3.00 | 460 | 390x844   |
+| 6.8" Galaxy S23 Ultra     | 1440x3088  | 4.00 | 501 | 360x772   |
+| 14.6" Galaxy Tab S8 Ultra | 1848x2960  | 4.00 | 240 | 462x740   |
+
+**Listing 1: adaptive density ratio**
 
 ```javascript
-function compute_adr(id, aspect, length) {
+function compute_adr(id, p) {
 
     // compute adaptive density ratio
 
     // id = photo id from catalog
-    // aspect = 0=landscape, 1=portrait
-    // length = rendition size
+    // p = presentation size of image 
 
-    var adr = devicePixelRatio; 
+    var 
+        axis = Math.max(catalog[id][WIDTH],catalog[id][HEIGHT]),
+        adr = Math.ceil(devicePixelRatio); // ignore fractional pixels
+    
+    // If the presentation size * adr is larger than the image,
+    // subtract 1 from the adr and try again 
 
-    while(Math.floor(adr) > 1 && length * adr > catalog[id][aspect]) {
+    while(adr > 1 && p * adr > catalog[id][axis]) {
         adr -= 1;
     }
 
@@ -65,7 +82,7 @@ function compute_adr(id, aspect, length) {
 
 Adaptive density is not computed for any image the same size or smaller than the presentation size. The picture is downloaded at its natural resolution and the browser upsamples the image to match the display density. 
 
-Otherwise, if the Device Pixel Ratio is 4*x* (16:1) but there aren't enough pixels in the image for a 4*x* rendition at the requested size, ADR will consider 3*x* (9:1), and 2*x* (4:1) before defaulting to 1*x* (1:1).
+If the Device Pixel Ratio is 4, but there aren't enough pixels in the image for a 4x rendition at the requested size, ADR will consider 3x and 2x  before defaulting to 1x.
 
 For each image, a *Q* (quality) score is computed to represent the fraction of hardware pixels versus image pixels in the rendition.
 
