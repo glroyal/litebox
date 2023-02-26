@@ -29,12 +29,14 @@ const
     gutter_size = 8,
     alt_max_width = 192,
     dpr = devicePixelRatio,
-    WIDTH=0, HEIGHT=1, ID=2, AUTH=3, UNSPL=4, ROW=5, // pointers into the catalog
-    DOWNLOAD_LIMIT = 192;  // 0 = no limit
+    WIDTH=0, HEIGHT=1, ID=2, AUTH=3, UNSPL=4, ROW=5,
+    no=0, yes=1; // pointers into the catalog
 
-if(DOWNLOAD_LIMIT) {
-    catalog = catalog.slice(0,DOWNLOAD_LIMIT-1);
-}
+// preferences
+
+const
+    PAGINATE = yes;
+
 
 observer = lozad();
 
@@ -108,7 +110,9 @@ function init() {
 
     //
 
-    page_length = Math.ceil(window_height / render_width) * columns_per_row * 2,
+//    page_length = Math.ceil(window_height / render_width) * columns_per_row * 2,
+
+    page_length = (PAGINATE) ? 56 : catalog.length,
 
     total_pages = Math.ceil(catalog.length / page_length),
 
@@ -405,7 +409,7 @@ document.addEventListener("DOMContentLoaded", function(){
     </nav>`;
 
     // fetch and render the next page on scroll
-
+/*
     $('pga').addEventListener("scroll", function () {
 
         if ($('pga').scrollHeight - $('pga').scrollTop === $('pga').clientHeight) {
@@ -417,6 +421,9 @@ document.addEventListener("DOMContentLoaded", function(){
         }
 
     }, false);
-
+*/
     auto_paginate(); // fetch and render the first page
+    const end = Date.now();
+    console.log(`Execution time: ${end - start} ms`);
+
 });
