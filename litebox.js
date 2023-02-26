@@ -30,7 +30,7 @@ const
     alt_max_width = 192,
     dpr = devicePixelRatio,
     WIDTH=0, HEIGHT=1, ID=2, AUTH=3, UNSPL=4, ROW=5, // pointers into the catalog
-    DOWNLOAD_LIMIT = 128;  // 0 = no limit
+    DOWNLOAD_LIMIT = 192;  // 0 = no limit
 
 if(DOWNLOAD_LIMIT) {
     catalog = catalog.slice(0,DOWNLOAD_LIMIT-1);
@@ -196,13 +196,16 @@ function fetch_page() {
 
     var ll, rr;
 
-    if(page_number < total_pages) {
+    if(page_number >= 0) {
 
-        ll = (page_number * page_length), rr = ll + page_length - 1;
+        if(page_number < total_pages) {
 
-        return catalog.slice(ll, rr).map(function(value,index) {
-            return value[ROW];
-        });
+            ll = (page_number * page_length), rr = ll + page_length - 1;
+
+            return catalog.slice(ll, rr).map(function(value,index) {
+                return value[ROW];
+            });
+        }
 
     } else {
         return [];
@@ -408,7 +411,8 @@ document.addEventListener("DOMContentLoaded", function(){
         if ($('pga').scrollHeight - $('pga').scrollTop === $('pga').clientHeight) {
 
             page_number++;
-            page_number = (page_number>(total_pages-1)) ? total_pages-1 : page_number;
+            // page_number = (page_number>(total_pages-1)) ? total_pages-1 : page_number;
+            page_number = (page_number>(total_pages-1)) ? -1 : page_number;
             auto_paginate();
         }
 
