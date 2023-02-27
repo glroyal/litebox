@@ -16,8 +16,6 @@
  *
  ***************************************************************************/
 
-const start = Date.now();
-
 // globals
 
 var
@@ -382,8 +380,6 @@ function lightbox_open(n) { // n = ROW
     last_n = n;
 }
 
-
-
 function crlf() {
 
     var
@@ -461,25 +457,20 @@ document.addEventListener("DOMContentLoaded", function(){
                 auto_paginate();
             }
 
-        } else {
-
-//           const end = Date.now();
-//            echo(`${} thumbnails rendered in ${} ms`);
-//             const end = Date.now();
-//           console.log(`Execution time: ${end - start} ms`);
-
         }
-
 
     }, false);
 */
+    const start = Date.now();
 
     auto_paginate(); // fetch and render the first page
-    const end = Date.now();
-    const t = end - start;
-    const num = (Math.ceil(1000/t) * catalog.length).toLocaleString();
-    const perflog = `Execution time = ${t} ms,<br> render speed ~= ${num} thumbs/sec`;
-    console.log(perflog);
-    echo(perflog);
+
+    if(!PAGINATE) {
+        const end = Date.now();
+        const t = end - start;
+        const num = (Math.ceil(1000/t) * catalog.length).toLocaleString();
+        const perflog = `${catalog.length} f : ${t} ms : ~= ${num} fps`;
+        echo(perflog);
+    }
 
 });
