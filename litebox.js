@@ -39,7 +39,7 @@ const
     DOWNLOAD_LIMIT = 0;
    // PAGE_LENGTH = catalog.length;
 
-    SOFT_INTERPOLATION = no;
+    ADR_VERSION = 2; // 1=variable dpr, 2=variable size
 
 if(DOWNLOAD_LIMIT) {
     catalog = catalog.slice(0,DOWNLOAD_LIMIT-1);
@@ -336,11 +336,10 @@ function lightbox_open(n) { // n = ROW
     var
         img_width,
         img_height,
-        display_width,
-        display_height,
         img_src,
         aspect = catalog[n][WIDTH] / catalog[n][HEIGHT],
-        adr = dpr;
+        adr = dpr,
+        q;
 
         console.log('render');
 
@@ -348,48 +347,88 @@ function lightbox_open(n) { // n = ROW
 
         // portrait
 
-        if(catalog[n][HEIGHT] <= window_height) {
+        if(ADR_VERSION==1) {
 
-            img_height = catalog[n][HEIGHT]; adr = 1; vumode='SD (1:1)';
+            // adr 1.0
+            // fixed height, variable dpr, browser upsamples to fill
 
-        } else if(Math.floor(catalog[n][HEIGHT]/dpr) <= window_height) {
-
-            img_height = Math.floor(catalog[n][HEIGHT]/dpr); vumode=`HD (1:${dpr})`;
+            adr = (catalog[n][HEIGHT] <= window_height) ? 1 : compute_adr(n,HEIGHT,window_height);
+            img_height = Math.floor(window_height * adr);
+            img_width = Math.ceil(aspect * img_height);
+            vumode = `ADR ${(adr<dpr)?'SD'+((adr>1)?'+':''):'HD'}`;
+q = img_height / catalog[n][HEIGHT];
+//            q = (window_height/adr) / (img_height/adr);
 
         } else {
 
-            img_height = Math.floor(window_height * dpr);vumode=`HD (${dpr}:1)`;
+            // adr 2.0
+            // fixed dpr, variable height, never upsample
 
+            if(catalog[n][HEIGHT] <= window_height) {
+
+                img_height = catalog[n][HEIGHT];
+                img_width = Math.ceil(aspect * img_height);
+                vumode = `DPR SD`;
+                 q = img_height / catalog[n][HEIGHT];
+
+            } else if(Math.floor(catalog[n][HEIGHT]/dpr) <= window_height) {
+
+                img_height = Math.floor(catalog[n][HEIGHT]/dpr);
+                img_width = Math.ceil(aspect * img_height);
+                vumode = `DPR HD-`;
+                q = (img_height*dpr) / catalog[n][HEIGHT];
+
+            } else {
+
+                img_height = Math.floor(window_height * dpr);
+                img_width = Math.ceil(aspect * img_height);
+                vumode=`DPR HD`;
+                q = (img_height/dpr) / window_height;
+            }
         }
-
-        img_width = Math.ceil(aspect * img_height);
-
-//        adr = (catalog[n][HEIGHT] <= window_height) ? 1 : compute_adr(n,HEIGHT,window_height);
-//        img_height = Math.floor(window_height * adr);
-//        img_width = Math.ceil(aspect * img_height);
 
     } else {
 
         // landscape
 
-        if(catalog[n][WIDTH] <= window_width) {
+        if(ADR_VERSION==1) {
 
-            img_width = catalog[n][WIDTH]; adr=1; vumode='SD (1:1)';
+            // adr 1.0
+            // fixed width, variable dpr, upsample to fill
 
-        } else if(Math.floor(catalog[n][WIDTH]/dpr) <= window_width) {
-
-            img_width = Math.floor(catalog[n][WIDTH]/dpr); vumode=`HD (1:${dpr})`;
+            adr = (catalog[n][WIDTH] <= window_width) ? 1 : compute_adr(n,WIDTH,window_width);
+            img_width = Math.floor(window_width * adr);
+            img_height = Math.ceil(img_width / aspect, 0);
+            vumode = `ADR ${(adr<dpr)?'SD'+((adr>1)?'+':''):'HD'}`;
+q = img_width * adr / (img_width * dpr);
 
         } else {
 
-            img_width = Math.floor(window_width * adr); vumode=`HD (${dpr}:1)`;
+            // adr 2.0
+            // fixed dpr, variable width, never upsample
+
+            if(catalog[n][WIDTH] <= window_width) {
+
+                img_width = catalog[n][WIDTH];
+                img_height = Math.ceil(img_width / aspect, 0);
+                vumode = `DPR SD`;
+                q = img_width / catalog[n][WIDTH];
+
+            } else if(Math.floor(catalog[n][WIDTH]/dpr) <= window_width) {
+
+                img_width = Math.floor(catalog[n][WIDTH]/dpr);
+                img_height = Math.ceil(img_width / aspect, 0);
+                vumode = `DPR HD-`;
+                q = (img_width*dpr) / catalog[n][WIDTH];
+
+            } else {
+
+                img_width = Math.floor(window_width * adr);
+                img_height = Math.ceil(img_width / aspect, 0);
+                vumode=`DPR HD`;
+                q = (img_width/dpr) / window_width;
+            }
         }
-
-        img_height = Math.ceil(img_width / aspect, 0);
-
-        //adr = (catalog[n][WIDTH] <= window_width) ? 1 : compute_adr(n,WIDTH,window_width);
-        //img_width = Math.floor(window_width * adr);
-        //img_height = Math.ceil(img_width / aspect, 0);
     }
 
     $('nfobox').style.top = (window_height-260)/2 + 'px';
@@ -403,9 +442,7 @@ function lightbox_open(n) { // n = ROW
             <tr><td class="stub">Window:</td><td class="col">${window_width}&thinsp;x&thinsp;${window_height}</td></tr>
             <tr><td class="stub">Render:</td><td class="col">${img_width + '&thinsp;x&thinsp;' + img_height}</td></tr>
             <tr><td class="stub">Mode:</td><td class="col">${vumode}</td></tr>
-            <tr><td class="stub">Quality:</td><td class="col">${
-                display_adr(img_width, img_height, adr)
-            } %</td></tr>
+            <tr><td class="stub">Density:</td><td class="col">${Math.floor(q * 100)} %</td></tr>
         </table>`;
 
     $('img01').src = `https://picsum.photos/id/${catalog[n][ID]}/${img_width}/${img_height}`;
