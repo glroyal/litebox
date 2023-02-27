@@ -39,6 +39,8 @@ const
     DOWNLOAD_LIMIT = 0;
    // PAGE_LENGTH = catalog.length;
 
+    SOFT_INTERPOLATION = no;
+
 if(DOWNLOAD_LIMIT) {
     catalog = catalog.slice(0,DOWNLOAD_LIMIT-1);
 }
@@ -334,9 +336,11 @@ function lightbox_open(n) { // n = ROW
     var
         img_width,
         img_height,
+        display_width,
+        display_height,
         img_src,
         aspect = catalog[n][WIDTH] / catalog[n][HEIGHT],
-        adr;
+        adr = dpr;
 
         console.log('render');
 
@@ -344,17 +348,48 @@ function lightbox_open(n) { // n = ROW
 
         // portrait
 
-        adr = (catalog[n][HEIGHT] <= window_height) ? 1 : compute_adr(n,HEIGHT,window_height);
-        img_height = Math.floor(window_height * adr);
+        if(catalog[n][HEIGHT] <= window_height) {
+
+            img_height = catalog[n][HEIGHT]; adr = 1; vumode='SD (1:1)';
+
+        } else if(Math.floor(catalog[n][HEIGHT]/dpr) <= window_height) {
+
+            img_height = Math.floor(catalog[n][HEIGHT]/dpr); vumode=`HD (1:${dpr})`;
+
+        } else {
+
+            img_height = Math.floor(window_height * dpr);vumode=`HD (${dpr}:1)`;
+
+        }
+
         img_width = Math.ceil(aspect * img_height);
+
+//        adr = (catalog[n][HEIGHT] <= window_height) ? 1 : compute_adr(n,HEIGHT,window_height);
+//        img_height = Math.floor(window_height * adr);
+//        img_width = Math.ceil(aspect * img_height);
 
     } else {
 
         // landscape
 
-        adr = (catalog[n][WIDTH] <= window_width) ? 1 : compute_adr(n,WIDTH,window_width);
-        img_width = Math.floor(window_width * adr);
+        if(catalog[n][WIDTH] <= window_width) {
+
+            img_width = catalog[n][WIDTH]; adr=1; vumode='SD (1:1)';
+
+        } else if(Math.floor(catalog[n][WIDTH]/dpr) <= window_width) {
+
+            img_width = Math.floor(catalog[n][WIDTH]/dpr); vumode=`HD (1:${dpr})`;
+
+        } else {
+
+            img_width = Math.floor(window_width * adr); vumode=`HD (${dpr}:1)`;
+        }
+
         img_height = Math.ceil(img_width / aspect, 0);
+
+        //adr = (catalog[n][WIDTH] <= window_width) ? 1 : compute_adr(n,WIDTH,window_width);
+        //img_width = Math.floor(window_width * adr);
+        //img_height = Math.ceil(img_width / aspect, 0);
     }
 
     $('nfobox').style.top = (window_height-260)/2 + 'px';
@@ -365,7 +400,9 @@ function lightbox_open(n) { // n = ROW
             <tr><td class="stub">Picsum ID:</td><td class="col">#&thinsp;${catalog[n][ID]}</td></tr>
             <tr><td class="stub">Author:</td><td class="col"><a href="https://unsplash.com/photos/${catalog[n][UNSPL]}" target="_blank">${authors[catalog[n][AUTH]]}</a></td></tr>
             <tr><td class="stub">Image:</td><td class="col">${catalog[n][WIDTH]+'&thinsp;x&thinsp;'+catalog[n][HEIGHT]}</td></tr>
-            <tr><td class="stub">Render:</td><td class="col">${Math.floor(img_width/adr) + '&thinsp;x&thinsp;' + Math.floor(img_height/adr)}</td></tr>
+            <tr><td class="stub">Window:</td><td class="col">${window_width}&thinsp;x&thinsp;${window_height}</td></tr>
+            <tr><td class="stub">Render:</td><td class="col">${img_width + '&thinsp;x&thinsp;' + img_height}</td></tr>
+            <tr><td class="stub">Mode:</td><td class="col">${vumode}</td></tr>
             <tr><td class="stub">Quality:</td><td class="col">${
                 display_adr(img_width, img_height, adr)
             } %</td></tr>
