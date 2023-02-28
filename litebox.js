@@ -39,7 +39,7 @@ const
     DOWNLOAD_LIMIT = 0;
    // PAGE_LENGTH = catalog.length;
 
-    ADR_VERSION = 2; // 1=variable dpr, 2=variable size
+    ADR_VERSION = 2; // 1=variable density, 2=variable area
 
 if(DOWNLOAD_LIMIT) {
     catalog = catalog.slice(0,DOWNLOAD_LIMIT-1);
@@ -350,14 +350,12 @@ function lightbox_open(n) { // n = ROW
         if(ADR_VERSION==1) {
 
             // adr 1.0
-            // fixed height, variable dpr, browser upsamples to fill
+            // fixed height, variable dpr, upsample to fill window
 
             adr = (catalog[n][HEIGHT] <= window_height) ? 1 : compute_adr(n,HEIGHT,window_height);
             img_height = Math.floor(window_height * adr);
             img_width = Math.ceil(aspect * img_height);
-            vumode = `ADR ${(adr<dpr)?'SD'+((adr>1)?'+':''):'HD'}`;
-q = img_height / catalog[n][HEIGHT];
-//            q = (window_height/adr) / (img_height/adr);
+            q = img_height / catalog[n][HEIGHT];
 
         } else {
 
@@ -366,26 +364,31 @@ q = img_height / catalog[n][HEIGHT];
 
             if(catalog[n][HEIGHT] <= window_height) {
 
+                // present image as-is
+
                 img_height = catalog[n][HEIGHT];
-                img_width = Math.ceil(aspect * img_height);
-                vumode = `DPR SD`;
-                 q = img_height / catalog[n][HEIGHT];
+                img_width = catalog[n][WIDTH];
+                q = img_height / catalog[n][HEIGHT];
 
             } else if(Math.floor(catalog[n][HEIGHT]/dpr) <= window_height) {
 
-                img_height = Math.floor(catalog[n][HEIGHT]/dpr);
+                // present image as-is, in SuperHD if available
+
+                img_height = Math.floor(catalog[n][HEIGHT]/adr);
                 img_width = Math.ceil(aspect * img_height);
-                vumode = `DPR HD-`;
-                q = (img_height*dpr) / catalog[n][HEIGHT];
+                q = (img_height*adr) / catalog[n][HEIGHT];
 
             } else {
 
-                img_height = Math.floor(window_height * dpr);
-                img_width = Math.ceil(aspect * img_height);
-                vumode=`DPR HD`;
-                q = (img_height/dpr) / window_height;
+                // present image SuperHD
+
+                img_height = Math.floor(window_height * adr);
+                img_width = Math.floor(aspect * img_height);
+                q = (img_height/adr) / window_height;
             }
         }
+
+        vumode = (adr>1) ? 'SuperHD' : ((img_height<720)?'SD':'HD');
 
     } else {
 
@@ -399,37 +402,43 @@ q = img_height / catalog[n][HEIGHT];
             adr = (catalog[n][WIDTH] <= window_width) ? 1 : compute_adr(n,WIDTH,window_width);
             img_width = Math.floor(window_width * adr);
             img_height = Math.ceil(img_width / aspect, 0);
-            vumode = `ADR ${(adr<dpr)?'SD'+((adr>1)?'+':''):'HD'}`;
-q = img_width * adr / (img_width * dpr);
+            q = img_width * adr / (img_width * dpr);
 
         } else {
 
             // adr 2.0
             // fixed dpr, variable width, never upsample
 
+            vumode = ((catalog[n][WIDTH]<1280)?'SD':'HD');
+
             if(catalog[n][WIDTH] <= window_width) {
+
+                // present image as-is
 
                 img_width = catalog[n][WIDTH];
                 img_height = Math.ceil(img_width / aspect, 0);
-                vumode = `DPR SD`;
                 q = img_width / catalog[n][WIDTH];
 
             } else if(Math.floor(catalog[n][WIDTH]/dpr) <= window_width) {
 
+                // present image as-is, in SuperHD if available
+
                 img_width = Math.floor(catalog[n][WIDTH]/dpr);
                 img_height = Math.ceil(img_width / aspect, 0);
-                vumode = `DPR HD-`;
                 q = (img_width*dpr) / catalog[n][WIDTH];
 
             } else {
 
+                // downsample to HD or SuperHD
+
                 img_width = Math.floor(window_width * adr);
                 img_height = Math.ceil(img_width / aspect, 0);
-                vumode=`DPR HD`;
                 q = (img_width/dpr) / window_width;
             }
         }
     }
+
+    vumode = (adr>1 && img_width >= (window_width*adr)||img_height >= (window_height*adr)) ? 'SuperHD' : ((img_height<720)?'SD':'HD');
 
     $('nfobox').style.top = (window_height-260)/2 + 'px';
     $('nfobox').style.left = (window_width-260)/2 + 'px';
