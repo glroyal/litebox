@@ -19,7 +19,7 @@
 // globals
 
 var
-    last_width, columns_per_row, total_gutter_width, max_img_width, render_width, gallery_width, left_offset,page_length, total_pages, page_number, column_height, last_n, start, t;
+    last_width, columns_per_row, total_gutter_width, max_img_width, render_width, gallery_width, left_offset,page_length, total_pages, page_number, column_height, last_n, start, t, pglen;
 
 var
     window_width, window_height, scrollbar_width, viewport_width;
@@ -41,8 +41,6 @@ const
 if(DOWNLOAD_LIMIT) {
     catalog = catalog.slice(0,DOWNLOAD_LIMIT-1);
 }
-
-
 
 observer = lozad();
 
@@ -268,6 +266,7 @@ function adaptive_density(mode, id, window_size) {
 }
 
 
+
 function auto_paginate() {
 
     // stream a page of thumbnails to the browser
@@ -275,6 +274,8 @@ function auto_paginate() {
     if(total_pages > 0) {
 
         var list = fetch_page();
+
+        pglen = list.length;
 
         if(list.length > 0) {
 
@@ -324,7 +325,7 @@ function auto_paginate() {
                     img_height  //Math.floor(render_height * adr)
                 }');" onclick="lightbox_open(${
                     list[i]
-                });"><div class="brick-id"></div></div>`;
+                });"></div>`; // <div class="brick-id"></div>
 
                 // adjust the column height and continue with the next picture
 
@@ -504,7 +505,7 @@ document.addEventListener("DOMContentLoaded", function(){
                     auto_paginate();
                     var t = Date.now() - start;
                     console.log(
-                        `${catalog.length} thumbs in ${t} ms = ~${
+                        `${pglen} thumbs in ${t} ms = ~${
                             (Math.ceil(1000/t) * catalog.length).toLocaleString()
                         } thumbs/sec`
                     );
@@ -520,7 +521,7 @@ document.addEventListener("DOMContentLoaded", function(){
     auto_paginate();
     var t = Date.now() - start;
     console.log(
-        `${catalog.length} thumbs in ${t} ms = ~${
+        `${pglen} thumbs in ${t} ms = ~${
             (Math.ceil(1000/t) * catalog.length).toLocaleString()
         } thumbs/sec`
     );
