@@ -223,6 +223,64 @@ function fetch_page() {
 }
 
 
+function adaptive_density(mode, id, window_size) {
+
+   var
+        img_width,
+        img_height,
+        aspect = catalog[id][WIDTH] / catalog[id][HEIGHT],
+        axis = (aspect > 1) ? 0 : 1,
+        q;
+
+    if(catalog[id][axis] <= window_size) {
+
+        // if image area <= window size, return whole
+
+        return (axis) ? catalog[id][HEIGHT] : catalog[id][WIDTH];
+
+    } else {
+
+        mode = (dpr==1) ? 1 : mode;  /* force SD, HD displays
+    to fixed size mode */
+
+        if(mode==1) {
+
+            // Mode 1 : fixed size
+
+            var adr = dpr; // devicePixelRatio
+
+            while(Math.floor(adr) > 1 &&
+                window_size * adr > catalog[id][axis]) {
+
+                adr -= 1; // decimate adr
+            }
+
+            return window_size * adr;
+
+        } else {
+
+            // Mode 2 : fixed density
+
+            if(Math.floor(catalog[id][HEIGHT] / dpr) <= window_size) {
+
+                // Small photos (SuperHD < window size)
+
+                return (axis) ? Math.floor(catalog[id][HEIGHT] / dpr) :
+                    Math.floor(catalog[id][WIDTH] / dpr);
+
+            } else {
+
+                // Large photos (SuperHD > window size)
+
+                return (axis) ? Math.floor(window_height * dpr) :
+                    Math.floor(window_width * dpr);
+            }
+        }
+    }
+}
+
+
+
 function auto_paginate() {
 
     const start = Date.now();
@@ -254,11 +312,18 @@ function auto_paginate() {
 
                 // compute the adaptive density ratio,
 
-                adr = (catalog[list[i]][WIDTH] <= render_width) ? 1 : compute_adr(list[i],WIDTH,render_width);
+                img_width = adaptive_density(1, list[i], render_width);
 
                 // and compile a thumbnail card.
 
-                render_height = Math.round((catalog[list[i]][HEIGHT] / catalog[list[i]][WIDTH]) * render_width, 0);
+                aspect = catalog[list[i]][HEIGHT] / catalog[list[i]][WIDTH];
+
+                img_height = Math.floor(aspect * img_width);
+
+                render_height = Math.floor(aspect * render_width);
+
+                quality = (dpr==1) ? 'SD' : ((img_width >= render_width) ? 'SuperHD' : 'HD');
+
 
                 chtml[i] = `<div class="lozad brick" style="top:${
                     column_height[j]
@@ -271,14 +336,14 @@ function auto_paginate() {
                 }px;background-image:url('https://picsum.photos/id/${
                     catalog[list[i]][ID]
                 }/${
-                    Math.floor(render_width * adr)
+                    img_width   //Math.floor(render_width * adr)
                 }/${
-                    Math.floor(render_height * adr)
+                    img_height  //Math.floor(render_height * adr)
                 }');" onclick="lightbox_open(${
                     list[i]
-                });"><div class="brick-id">${
-                    display_adr(render_width,render_height,adr)
-                }</div></div>`;
+                });"></div>`;
+
+//<div class="brick-id">${}</div>
 
                 // adjust the column height and continue with the next picture
 
@@ -338,10 +403,50 @@ function lightbox_open(n) { // n = ROW
         img_height,
         img_src,
         aspect = catalog[n][WIDTH] / catalog[n][HEIGHT],
-        adr = dpr,
-        q;
+        vumode;
 
-        console.log('render');
+    // console.log('render');
+
+    if(aspect<1) {
+
+        // portrait
+        img_height = adaptive_density(2,n,window_height);
+        img_width = Math.floor(aspect * img_height);
+
+    } else {
+
+        // landscape
+        img_width = adaptive_density(2,n,window_width);
+        img_height = Math.floor(img_width / aspect);
+    }
+
+    vumode = (Math.max(img_width,img_height) > Math.max(window_width,window_height)) ? 'SuperHD' :
+        ((dpr>1 || img_height>720) ? 'HD' : 'SD');
+
+    $('nfobox').style.top = (window_height-260)/2 + 'px';
+    $('nfobox').style.left = (window_width-260)/2 + 'px';
+
+    $('nfobox').innerHTML = `
+        <table>
+            <tr><td class="stub">Picsum ID:</td><td class="col">#&thinsp;${catalog[n][ID]}</td></tr>
+            <tr><td class="stub">Author:</td><td class="col"><a href="https://unsplash.com/photos/${catalog[n][UNSPL]}" target="_blank">${authors[catalog[n][AUTH]]}</a></td></tr>
+            <tr><td class="stub">Image:</td><td class="col">${catalog[n][WIDTH]+'&thinsp;x&thinsp;'+catalog[n][HEIGHT]}</td></tr>
+            <tr><td class="stub">Window:</td><td class="col">${window_width}&thinsp;x&thinsp;${window_height}</td></tr>
+            <tr><td class="stub">Render:</td><td class="col">${img_width + '&thinsp;x&thinsp;' + img_height}</td></tr>
+            <tr><td class="stub">Density:</td><td class="col">${vumode}</td></tr>
+        </table>`;
+
+    $('img01').src = `https://picsum.photos/id/${catalog[n][ID]}/${img_width}/${img_height}`;
+
+    $('lightbox').style.display = 'block';
+    $('menu').style.visibility = 'visible';
+    $('nfobox').style.visibility = 'hidden';
+
+    last_n = n;
+
+
+
+/*
 
     if(aspect < 1) {
 
@@ -437,30 +542,10 @@ function lightbox_open(n) { // n = ROW
             }
         }
     }
+*/
 
-    vumode = (adr>1 && img_width >= (window_width*adr)||img_height >= (window_height*adr)) ? 'SuperHD' : ((img_height<720)?'SD':'HD');
 
-    $('nfobox').style.top = (window_height-260)/2 + 'px';
-    $('nfobox').style.left = (window_width-260)/2 + 'px';
 
-    $('nfobox').innerHTML = `
-        <table>
-            <tr><td class="stub">Picsum ID:</td><td class="col">#&thinsp;${catalog[n][ID]}</td></tr>
-            <tr><td class="stub">Author:</td><td class="col"><a href="https://unsplash.com/photos/${catalog[n][UNSPL]}" target="_blank">${authors[catalog[n][AUTH]]}</a></td></tr>
-            <tr><td class="stub">Image:</td><td class="col">${catalog[n][WIDTH]+'&thinsp;x&thinsp;'+catalog[n][HEIGHT]}</td></tr>
-            <tr><td class="stub">Window:</td><td class="col">${window_width}&thinsp;x&thinsp;${window_height}</td></tr>
-            <tr><td class="stub">Render:</td><td class="col">${img_width + '&thinsp;x&thinsp;' + img_height}</td></tr>
-            <tr><td class="stub">Mode:</td><td class="col">${vumode}</td></tr>
-            <tr><td class="stub">Density:</td><td class="col">${Math.floor(q * 100)} %</td></tr>
-        </table>`;
-
-    $('img01').src = `https://picsum.photos/id/${catalog[n][ID]}/${img_width}/${img_height}`;
-
-    $('lightbox').style.display = 'block';
-    $('menu').style.visibility = 'visible';
-    $('nfobox').style.visibility = 'hidden';
-
-    last_n = n;
 }
 
 function crlf() {
