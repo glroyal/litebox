@@ -439,7 +439,7 @@ document.addEventListener("DOMContentLoaded", function(){
         <span class="material-icons md-24 md-light" onclick="lightbox_close();">close</span>
     </nav>`;
 
-    if(PAGINATE) {
+    //if(PAGINATE) {
 
         // fetch and render the next page on scroll
 
@@ -457,7 +457,7 @@ document.addEventListener("DOMContentLoaded", function(){
                     auto_paginate();
                     var t = Date.now() - start;
                     console.log(
-                        `${pglen} thumbs in ${t} ms = ~${
+                        `scroll: ${pglen} thumbs in ${t} ms = ~${
                             (Math.ceil(1000/t) * catalog.length).toLocaleString()
                         } thumbs/sec`
                     );
@@ -465,7 +465,7 @@ document.addEventListener("DOMContentLoaded", function(){
             }
 
         }, false);
-    }
+    //}
 
     // fetch and render the first page
 
@@ -473,7 +473,7 @@ document.addEventListener("DOMContentLoaded", function(){
     auto_paginate();
     var t = Date.now() - start;
     console.log(
-        `${pglen} thumbs in ${t} ms = ~${
+        `init: ${pglen} thumbs in ${t} ms = ~${
             (Math.ceil(1000/t) * catalog.length).toLocaleString()
         } thumbs/sec`
     );
