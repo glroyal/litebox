@@ -24,6 +24,10 @@ var
 var
     window_width, window_height, scrollbar_width, viewport_width;
 
+var nua = navigator.userAgent;
+var is_android = ((nua.indexOf('Mozilla/5.0') > -1 && nua.indexOf('Android ') > -1 &&     nua.indexOf('AppleWebKit') > -1) && !(nua.indexOf('Chrome') > -1));
+
+
 const
     responsive_columns = [0,0,2,2,2,2,3,3,4,4,5,5,5,5,6,6,7,7,8,8,9],
     gutter_size = 8,
@@ -36,7 +40,8 @@ const
 
 const
     DOWNLOAD_LIMIT = 0,
-    PAGINATE = yes;
+    PAGINATE = (is_android) ? no : yes;
+
 
 if(DOWNLOAD_LIMIT) {
     catalog = catalog.slice(0,DOWNLOAD_LIMIT-1);
@@ -446,6 +451,8 @@ document.addEventListener("DOMContentLoaded", function(){
         $('pga').addEventListener("scroll", function () {
 
             if(page_number >= 0) {
+
+                console.log('trigger');
 
                 if ($('pga').scrollHeight - $('pga').scrollTop === $('pga').clientHeight) {
 
