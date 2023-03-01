@@ -156,7 +156,7 @@ window.addEventListener("resize",debounce(function(e){
     }
 }));
 
-
+/*
 function compute_adr(id, aspect, length) {
 
     // compute adaptive density ratio
@@ -178,7 +178,7 @@ function display_adr(width, height, adr) {
 
     return Math.max(width*adr,height*adr) / Math.max(width*dpr,height*dpr) * 100;
 }
-
+*/
 
 function $(el) {
 
@@ -236,9 +236,9 @@ function adaptive_density(mode, id, window_size) {
 
             // Mode 1 : fixed size
 
-            var adr = dpr; // adaptive density ratio = devicePixelRatio
+            var adr = Math.floor(dpr); // adaptive density ratio = devicePixelRatio
 
-            while(Math.floor(adr) > 1 && window_size * adr > catalog[id][axis]) {
+            while(adr > 1 && window_size * adr > catalog[id][axis]) {
 
                 adr -= 1; // decimate adr
             }
@@ -326,6 +326,8 @@ function auto_paginate() {
                 }');" onclick="lightbox_open(${
                     list[i]
                 });"></div>`; // <div class="brick-id"></div>
+
+                console.log(chtml[i]);
 
                 // adjust the column height and continue with the next picture
 
