@@ -6,11 +6,17 @@
 
 ## Overview
 
-**LiteBox** is a Graphical Photo Browser that renders photos with the finest practical image detail on all devices. 
+**LiteBox** is a Graphical Photo Browser that renders photos with the finest practical image detail on all devices. It does not require a SuperHD video display, but takes full advantage of one.
 
-It's written in **Computed HTML**, a programming model where the tags describing a layout are compiled in RAM, then passed to the browser's HTML interpreter to render.
+
+
+It's written in **Computed HTML**, a programming model where the tags describing a web page are compiled in RAM, then passed to the browser's HTML interpreter to render.
+
+
 
 It introduces **Adaptive Density**, a strategy for optimizing image quality by adjusting the download resolution for each image to match the pixel density of the screen it's being displayed on. 
+
+
 
 ## You're Soaking In It
 
@@ -37,9 +43,27 @@ LiteBox weighs just 67K, but can render its catalog of 893 photos as thumbnails 
 
 ## Adaptive Density
 
-Adaptive Density is a common sense approach to image optimization.
+It is axiomatic that people who buy SuperHD computers, tablets, and phones expect to browse SuperHD websites. 
 
-The objective is to fill all of the screen pixels in a rendition with image pixels, either by downsampling an oversized image or upsampling an undersized image to match the device pixel ratio (DPR) of the display it's being viewed on, for each rendition of that image (thumbnail or fullscreen).
+But the HTML `srcset` attribute, which allows the browser to select between pre-rendered images, is not suitable for large, heterogenous, or dynamic media collections. 
+
+Adaptive Density is an algorithm that holds either the presentation size or the pixel density constant, and computes the resolution necessary to display an image that fulfills the primary constraint. The image may then be downloaded from a server capable of scaling pictures to specified dimensions.  
+
+**Fixed Size** mode always scales photos to the presentation size, even if the browser has to upsample the image to fit. 
+
+**Fixed Density** mode always scales photos to the presentation size * devicePixelRatio. It will always render an image in SuperHD on a SuperHD display, but the image dimensions may be smaller than the presentation size.
+
+We define a SuperHD display to be any device with a devicePixelRatio > 1, and a SuperHD rendition to be any rendition on a SuperHD display in which there is a 1:1 ratio of image pixels to screen pixels. 
+
+### notes
+
+- High resolution does not necessarily mean high detail. There are low resolution pictures with high detail, and high resolution pictures with low detail. The origin media (film or digital), source (user uploads or commercial media), and subject (people, places, artwork) will vary from picture to picture.
+
+- Adaptive Density is a function of image resolution vs devicePixelRatio vs window size. This function is applied to the image whenever the window geometry changes. The rendition may shift between SD, HD, and SuperHD as the window is dragged, or the device rotated.
+
+- None of the above applies for SD or HD displays (devicePixelRatio == 1), or *fixed size* mode when the APR has been decimated to 1. In that case, the image is downloaded at the presentation size, which conserves bandwidth on SD and HD devices by not downloading more image detail than the display can resolve.
+
+
 
 **Table 1: geometries of a small sample of video displays**
 
@@ -55,42 +79,65 @@ The objective is to fill all of the screen pixels in a rendition with image pixe
 | 6.8" Galaxy S23 Ultra     | 1440x3088  | 4.00 | 501 | 360x772   |
 | 14.6" Galaxy Tab S8 Ultra | 1848x2960  | 4.00 | 240 | 462x740   |
 
-**Listing 1: adaptive density ratio**
+**Listing 1: Adaptive Density**
 
 ```javascript
-function compute_adr(id, p) {
+function adaptive_density(mode, id, window_size) {
 
-    // compute adaptive density ratio
+   var
+        img_width,
+        img_height,
+        aspect = catalog[id][WIDTH] / catalog[id][HEIGHT],
+        axis = (aspect > 1) ? 0 : 1,
+        q;
 
-    // id = photo id from catalog
-    // p = presentation size of image 
+    if(catalog[n][axis] <= window_size) {
 
-    var 
-        axis = Math.max(catalog[id][WIDTH],catalog[id][HEIGHT]),
-        adr = Math.ceil(devicePixelRatio); // ignore fractional pixels
-    
-    // If the presentation size * adr is larger than the image,
-    // subtract 1 from the adr and try again 
+        // if image area <= window size, return whole
 
-    while(adr > 1 && p * adr > catalog[id][axis]) {
-        adr -= 1;
+        return (axis) ? catalog[id][HEIGHT] : catalog[id][WIDTH];
+
+    } else {
+
+        mode = (dpr==1) ? 1 : mode;  /* force SD, HD displays 
+    to fixed size mode */
+
+        if(mode==1) { 
+
+            // Mode 1 : fixed size
+
+            var adr = dpr; // devicePixelRatio
+
+            while(Math.floor(adr) > 1 && 
+                window_size * adr > catalog[id][axis]) {
+
+                adr -= 1; // decimate adr 
+            }
+
+            return window_size * adr;
+
+        } else { 
+
+            // Mode 2 : fixed density
+
+            if(Math.floor(catalog[n][HEIGHT] / dpr) <= window_size) {
+
+                // Small photos (SuperHD < window size)  
+
+                return (axis) ? Math.floor(catalog[id][HEIGHT] / dpr) : 
+                    Math.floor(catalog[id][WIDTH] / dpr);
+
+            } else {
+
+                // Large photos (SuperHD > window size)  
+
+                return (axis) ? Math.floor(window_height * dpr) : 
+                    Math.floor(window_width * dpr);
+            }
+        }
     }
-
-    return adr;
 }
 ```
-
-Adaptive density is not computed for any image the same size or smaller than the presentation size. The picture is downloaded at its natural resolution and the browser upsamples the image to match the display density. 
-
-If the Device Pixel Ratio is 4, but there aren't enough pixels in the image for a 4x rendition at the requested size, ADR will consider 3x and 2x  before defaulting to 1x.
-
-For each image, a *Q* (quality) score is computed to represent the fraction of hardware pixels versus image pixels in the rendition.
-
-> *Q = (aspect * adr / aspect * dpr) * 100, where **aspect** is the greater of the width or height of the rendition, **adr** is the computed Adaptive Density Ratio, and **dpr** is the hardware Device Pixel Ratio.*
-
-100 means that there is an image pixel for every display pixel. Lower scores indicate some amount of upscaling was required to fill the rendition. In some cases the ADR may be greater than 1 but less than the DPR, yielding better-than-standard definition.
-
-Bandwidth consumption is conservative but never stingy. High-definition displays show high-definition photos, but standard-definition displays don't waste bandwidth on picture detail they can't resolve. 
 
 ### Lorem Picsum
 
