@@ -8,21 +8,13 @@
 
 **LiteBox** is a Graphical Photo Browser that renders photos with the finest practical image detail on all devices. It does not require a SuperHD video display, but takes full advantage of one.
 
-
-
-It's written in **Computed HTML**, a programming model where the tags describing a web page are compiled in RAM, then passed to the browser's HTML interpreter to render.
-
-
+LiteBox is written in **Computed HTML**, a programming model where the tags describing a web page are compiled in RAM, then passed to the browser's HTML interpreter to render.
 
 It introduces **Adaptive Density**, a strategy for optimizing image quality by adjusting the download resolution for each image to match the pixel density of the screen it's being displayed on. 
 
-
-
 ## You're Soaking In It
 
-[**View the Live Demo**](https://glroyal.github.io/litebox/) on your dektop, notebook, tablet and phone. The Q (quality) score for almost all photos on almost all devices will be 100%.
-
-Lower figures indicate there weren't enough pixels in the image to fill all the hardware pixels, and the browser upsampled the image to cover the gap. The visual quality will be no worse than standard, and possibly a bit better.
+[**View the Live Demo**](https://glroyal.github.io/litebox/) on your dektop, notebook, tablet and phone.
 
 ## Make It Yours
 
@@ -30,16 +22,17 @@ Lower figures indicate there weren't enough pixels in the image to fill all the 
 
 * Drag the file index.html into an open browser window
 
-* *"Absorb what is useful, discard what is useless, and add what is specifically your own"* 
-  -- Bruce Lee
+* *"Absorb what is useful, discard what is useless, and add what is specifically your own"* -- Bruce Lee
 
 ## Computed HTML
 
-There is an element property called [**innerHTML**]([Element.innerHTML - Web APIs | MDN](https://developer.mozilla.org/en-US/docs/Web/API/Element/innerHTML)), which reads or writes tranches of the DOM as a string of HTML tags.
+Computed HTML achieves native app performance by exploiting the latent potential of an overlooked JavaScript language construct. 
 
-InnerHTML is orders of magnitude faster than JavaScript DOM because the browser's HTML interpreter is optimized for generating layouts from streams of markup tags.
+[**Element.innerHTML**]([Element.innerHTML - Web APIs | MDN](https://developer.mozilla.org/en-US/docs/Web/API/Element/innerHTML)) reads or writes tranches of the DOM as a string of HTML tags. It is orders of magnitude faster than conventional Dynamic HTML. 
 
-LiteBox weighs just 67K, but can render its catalog of 893 photos as thumbnails in 7  ms.
+Sub-second Time-To-Interactive (TTI) is typical for Computed HTML pages regardless of layout complexity, because element.innerHTML is highly optimized for rendering DOMs from strings of HTML tags.
+
+
 
 ## Adaptive Density
 
@@ -47,23 +40,25 @@ It is axiomatic that people who buy SuperHD computers, tablets, and phones expec
 
 But the HTML `srcset` attribute, which allows the browser to select between pre-rendered images, is not suitable for large, heterogenous, or dynamic media collections. 
 
-Adaptive Density is an algorithm that holds either the presentation size or the pixel density constant, and computes the resolution necessary to display an image that fulfills the primary constraint. The image may then be downloaded from a server capable of scaling pictures to specified dimensions.  
+Adaptive Density is an algorithm that holds either the presentation size or the pixel density constant, and computes the resolution necessary to display an image that fulfills the primary constraint. The image may then be downloaded from a server capable of scaling pictures to arbitrary dimensions.  
 
-**Fixed Size** mode always scales photos to the presentation size, even if the browser has to upsample the image to fit. 
+We define a **SuperHD display** to be any device with a devicePixelRatio > 1, and a **SuperHD rendition** to be any rendition on a SuperHD display in which there is a 1:1 ratio of image pixels to screen pixels.
 
-**Fixed Density** mode always scales photos to the presentation size * devicePixelRatio. It will always render an image in SuperHD on a SuperHD display, but the image dimensions may be smaller than the presentation size.
+**Fixed Size Mode** always scales photos to the presentation size, even if the browser has to upsample the image to fit. This mode is used primarily for thumbnails, because upsampling only occurs in the event that the native size of an image is smaller than the presentation size, which is a rare but possible event. 
 
-We define a SuperHD display to be any device with a devicePixelRatio > 1, and a SuperHD rendition to be any rendition on a SuperHD display in which there is a 1:1 ratio of image pixels to screen pixels. 
+**Fixed Density Mode** always scales photos to the (presentation size * devicePixelRatio). It will always render an image in SuperHD on a SuperHD display, but the image dimensions may be smaller than the presentation size.
+
+
 
 ### notes
 
-- High resolution does not necessarily mean high detail. There are low resolution pictures with high detail, and high resolution pictures with low detail. The origin media (film or digital), source (user uploads or commercial media), and subject (people, places, artwork) will vary from picture to picture.
+- High resolution does not necessarily mean high detail. There are low resolution pictures with high detail, and high resolution pictures with low detail. The origin media (film or digital), source (casual uploads or managed collections), and subject (people, places, artwork) will vary from one picture to the next.
 
-- Adaptive Density is a function of image resolution vs devicePixelRatio vs window size. This function is applied to the image whenever the window geometry changes. The rendition may shift between SD, HD, and SuperHD as the window is dragged, or the device rotated.
+- Adaptive Density is a function of image resolution vs devicePixelRatio vs presentation size. This function may be applied to an image whenever the window geometry changes. The rendition may shift between SD, HD, and SuperHD as the window is resized, or the device is rotated.
 
-- None of the above applies for SD or HD displays (devicePixelRatio == 1), or *fixed size* mode when the APR has been decimated to 1. In that case, the image is downloaded at the presentation size, which conserves bandwidth on SD and HD devices by not downloading more image detail than the display can resolve.
-
-
+- None of the above applies for SD or HD displays (devicePixelRatio == 1), or *fixed size* mode when the Adaptive Density Ratio (ADR) has been decimated to 1. In that case, the image is downloaded at the presentation size, which conserves bandwidth on SD and HD devices by not downloading more image detail than the display can resolve.
+  
+  
 
 **Table 1: geometries of a small sample of video displays**
 
@@ -79,64 +74,67 @@ We define a SuperHD display to be any device with a devicePixelRatio > 1, and a 
 | 6.8" Galaxy S23 Ultra     | 1440x3088  | 4.00 | 501 | 360x772   |
 | 14.6" Galaxy Tab S8 Ultra | 1848x2960  | 4.00 | 240 | 462x740   |
 
+
+
 **Listing 1: Adaptive Density**
 
 ```javascript
-function adaptive_density(mode, id, window_size) {
+function adaptive_density(mode, id, presentation_size) {
 
    var
         img_width,
         img_height,
         aspect = catalog[id][WIDTH] / catalog[id][HEIGHT],
-        axis = (aspect > 1) ? 0 : 1,
-        q;
+        axis = (aspect > 1) ? 0 : 1;
 
-    if(catalog[n][axis] <= window_size) {
+    if(catalog[id][axis] <= presentation_size) {
 
-        // if image area <= window size, return whole
+        // SD photos
 
         return (axis) ? catalog[id][HEIGHT] : catalog[id][WIDTH];
 
     } else {
 
-        mode = (dpr==1) ? 1 : mode;  /* force SD, HD displays 
-    to fixed size mode */
+        // force non-SuperHD displays to fixed size mode
 
-        if(mode==1) { 
+        mode = (dpr==1) ? 1 : mode;  
+
+        if(mode==1) {
 
             // Mode 1 : fixed size
 
-            var adr = dpr; // devicePixelRatio
+            var adr = dpr; // adaptive density ratio = devicePixelRatio
 
             while(Math.floor(adr) > 1 && 
-                window_size * adr > catalog[id][axis]) {
+                presentation_size * adr > catalog[id][axis]) {
 
-                adr -= 1; // decimate adr 
+                adr -= 1; // decimate adr
             }
 
-            return window_size * adr;
+            return presentation_size * adr;
 
-        } else { 
+        } else {
 
             // Mode 2 : fixed density
 
-            if(Math.floor(catalog[n][HEIGHT] / dpr) <= window_size) {
+            if(Math.floor(catalog[id][HEIGHT] / dpr) <= presentation_size) {
 
-                // Small photos (SuperHD < window size)  
+                // Small photos (HD and SuperHD < window size)
 
                 return (axis) ? Math.floor(catalog[id][HEIGHT] / dpr) : 
-                    Math.floor(catalog[id][WIDTH] / dpr);
+                    Math.floor(catalog[id][WIDTH] / dpr);
 
             } else {
 
-                // Large photos (SuperHD > window size)  
+                // Large photos (HD and SuperHD > window size)
 
                 return (axis) ? Math.floor(window_height * dpr) : 
-                    Math.floor(window_width * dpr);
+                    Math.floor(window_width * dpr);
             }
         }
     }
 }
+
 ```
 
 ### Lorem Picsum
