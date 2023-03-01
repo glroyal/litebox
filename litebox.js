@@ -236,14 +236,14 @@ function adaptive_density(mode, id, window_size) {
 
             // Mode 1 : fixed size
 
-            var adr = Math.floor(dpr); // adaptive density ratio = devicePixelRatio
+            var adr = dpr; // adaptive density ratio = devicePixelRatio
 
-            while(adr > 1 && window_size * adr > catalog[id][axis]) {
+            while(Math.floor(adr) > 1 && window_size * adr > catalog[id][axis]) {
 
                 adr -= 1; // decimate adr
             }
 
-            return window_size * adr;
+            return Math.floor(window_size * adr);
 
         } else {
 
