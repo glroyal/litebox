@@ -304,8 +304,6 @@ function auto_paginate() {
                     list[i]
                 });"></div>`; // <div class="brick-id"></div>
 
-                console.log(chtml[i]);
-
                 // adjust the column height and continue with the next picture
 
                 column_height[j] += render_height + gutter_size;
