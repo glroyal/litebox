@@ -19,7 +19,7 @@
 // globals
 
 var
-    last_width, columns_per_row, total_gutter_width, max_img_width, render_width, gallery_width, left_offset,page_length, total_pages, page_number, column_height, last_n;
+    last_width, columns_per_row, total_gutter_width, max_img_width, render_width, gallery_width, left_offset,page_length, total_pages, page_number, column_height, last_n, start, t;
 
 var
     window_width, window_height, scrollbar_width, viewport_width;
@@ -35,11 +35,8 @@ const
 // preferences
 
 const
-    PAGINATE = no,
-    DOWNLOAD_LIMIT = 0;
-   // PAGE_LENGTH = catalog.length;
-
-    ADR_VERSION = 2; // 1=variable density, 2=variable area
+    DOWNLOAD_LIMIT = 0,
+    PAGINATE = yes;
 
 if(DOWNLOAD_LIMIT) {
     catalog = catalog.slice(0,DOWNLOAD_LIMIT-1);
@@ -117,11 +114,7 @@ function init() {
 
     left_offset = Math.floor((viewport_width - gallery_width) / 2);
 
-    //
-
-//    page_length = Math.ceil(window_height / render_width) * columns_per_row * 2,
-
-    page_length = (PAGINATE) ? 56 : catalog.length,
+    page_length = (PAGINATE) ? Math.ceil(window_height / render_width) * columns_per_row * 2 : catalog.length,
 
     total_pages = Math.ceil(catalog.length / page_length),
 
@@ -229,28 +222,25 @@ function adaptive_density(mode, id, window_size) {
         img_width,
         img_height,
         aspect = catalog[id][WIDTH] / catalog[id][HEIGHT],
-        axis = (aspect > 1) ? 0 : 1,
-        q;
+        axis = (aspect > 1) ? 0 : 1;
 
     if(catalog[id][axis] <= window_size) {
 
-        // if image area <= window size, return whole
+        // SD photos
 
         return (axis) ? catalog[id][HEIGHT] : catalog[id][WIDTH];
 
     } else {
 
-        mode = (dpr==1) ? 1 : mode;  /* force SD, HD displays
-    to fixed size mode */
+        mode = (dpr==1) ? 1 : mode;  /* force non-SuperHD displays to fixed size mode */
 
         if(mode==1) {
 
             // Mode 1 : fixed size
 
-            var adr = dpr; // devicePixelRatio
+            var adr = dpr; // adaptive density ratio = devicePixelRatio
 
-            while(Math.floor(adr) > 1 &&
-                window_size * adr > catalog[id][axis]) {
+            while(Math.floor(adr) > 1 && window_size * adr > catalog[id][axis]) {
 
                 adr -= 1; // decimate adr
             }
@@ -263,34 +253,28 @@ function adaptive_density(mode, id, window_size) {
 
             if(Math.floor(catalog[id][HEIGHT] / dpr) <= window_size) {
 
-                // Small photos (SuperHD < window size)
+                // Small photos (HD and SuperHD < window size)
 
-                return (axis) ? Math.floor(catalog[id][HEIGHT] / dpr) :
-                    Math.floor(catalog[id][WIDTH] / dpr);
+                return (axis) ? Math.floor(catalog[id][HEIGHT] / dpr) : Math.floor(catalog[id][WIDTH] / dpr);
 
             } else {
 
-                // Large photos (SuperHD > window size)
+                // Large photos (HD and SuperHD > window size)
 
-                return (axis) ? Math.floor(window_height * dpr) :
-                    Math.floor(window_width * dpr);
+                return (axis) ? Math.floor(window_height * dpr) : Math.floor(window_width * dpr);
             }
         }
     }
 }
 
 
-
 function auto_paginate() {
 
-    const start = Date.now();
-
-    // stream a page of thumbnail cards to the browser
+    // stream a page of thumbnails to the browser
 
     if(total_pages > 0) {
 
         var list = fetch_page();
-        //console.log(`list len=${list.length}`);
 
         if(list.length > 0) {
 
@@ -314,7 +298,7 @@ function auto_paginate() {
 
                 img_width = adaptive_density(1, list[i], render_width);
 
-                // and compile a thumbnail card.
+                // and compile a thumbnail div.
 
                 aspect = catalog[list[i]][HEIGHT] / catalog[list[i]][WIDTH];
 
@@ -322,8 +306,7 @@ function auto_paginate() {
 
                 render_height = Math.floor(aspect * render_width);
 
-                quality = (dpr==1) ? 'SD' : ((img_width >= render_width) ? 'SuperHD' : 'HD');
-
+                // quality = (dpr==1) ? 'SD' : ((img_width >= render_width) ? 'SuperHD' : 'HD');
 
                 chtml[i] = `<div class="lozad brick" style="top:${
                     column_height[j]
@@ -341,9 +324,7 @@ function auto_paginate() {
                     img_height  //Math.floor(render_height * adr)
                 }');" onclick="lightbox_open(${
                     list[i]
-                });"></div>`;
-
-//<div class="brick-id">${}</div>
+                });"><div class="brick-id"></div></div>`;
 
                 // adjust the column height and continue with the next picture
 
@@ -355,9 +336,6 @@ function auto_paginate() {
             el = document.createElement('div');
             el.innerHTML = chtml.join('');
             $('gallery').appendChild(el);
-
-            //const end = Date.now();
-            //console.log(`Execution time: ${end - start} ms`);
 
             // and lazy-load the photos
 
@@ -443,111 +421,9 @@ function lightbox_open(n) { // n = ROW
     $('nfobox').style.visibility = 'hidden';
 
     last_n = n;
-
-
-
-/*
-
-    if(aspect < 1) {
-
-        // portrait
-
-        if(ADR_VERSION==1) {
-
-            // adr 1.0
-            // fixed height, variable dpr, upsample to fill window
-
-            adr = (catalog[n][HEIGHT] <= window_height) ? 1 : compute_adr(n,HEIGHT,window_height);
-            img_height = Math.floor(window_height * adr);
-            img_width = Math.ceil(aspect * img_height);
-            q = img_height / catalog[n][HEIGHT];
-
-        } else {
-
-            // adr 2.0
-            // fixed dpr, variable height, never upsample
-
-            if(catalog[n][HEIGHT] <= window_height) {
-
-                // present image as-is
-
-                img_height = catalog[n][HEIGHT];
-                img_width = catalog[n][WIDTH];
-                q = img_height / catalog[n][HEIGHT];
-
-            } else if(Math.floor(catalog[n][HEIGHT]/dpr) <= window_height) {
-
-                // present image as-is, in SuperHD if available
-
-                img_height = Math.floor(catalog[n][HEIGHT]/adr);
-                img_width = Math.ceil(aspect * img_height);
-                q = (img_height*adr) / catalog[n][HEIGHT];
-
-            } else {
-
-                // present image SuperHD
-
-                img_height = Math.floor(window_height * adr);
-                img_width = Math.floor(aspect * img_height);
-                q = (img_height/adr) / window_height;
-            }
-        }
-
-        vumode = (adr>1) ? 'SuperHD' : ((img_height<720)?'SD':'HD');
-
-    } else {
-
-        // landscape
-
-        if(ADR_VERSION==1) {
-
-            // adr 1.0
-            // fixed width, variable dpr, upsample to fill
-
-            adr = (catalog[n][WIDTH] <= window_width) ? 1 : compute_adr(n,WIDTH,window_width);
-            img_width = Math.floor(window_width * adr);
-            img_height = Math.ceil(img_width / aspect, 0);
-            q = img_width * adr / (img_width * dpr);
-
-        } else {
-
-            // adr 2.0
-            // fixed dpr, variable width, never upsample
-
-            vumode = ((catalog[n][WIDTH]<1280)?'SD':'HD');
-
-            if(catalog[n][WIDTH] <= window_width) {
-
-                // present image as-is
-
-                img_width = catalog[n][WIDTH];
-                img_height = Math.ceil(img_width / aspect, 0);
-                q = img_width / catalog[n][WIDTH];
-
-            } else if(Math.floor(catalog[n][WIDTH]/dpr) <= window_width) {
-
-                // present image as-is, in SuperHD if available
-
-                img_width = Math.floor(catalog[n][WIDTH]/dpr);
-                img_height = Math.ceil(img_width / aspect, 0);
-                q = (img_width*dpr) / catalog[n][WIDTH];
-
-            } else {
-
-                // downsample to HD or SuperHD
-
-                img_width = Math.floor(window_width * adr);
-                img_height = Math.ceil(img_width / aspect, 0);
-                q = (img_width/dpr) / window_width;
-            }
-        }
-    }
-*/
-
-
-
 }
 
+/*
 function crlf() {
 
     var
@@ -571,7 +447,7 @@ function echo(msg) {
     $('gallery').appendChild(el);
     crlf();
 }
-
+*/
 
 // And Here We Go
 
@@ -610,35 +486,43 @@ document.addEventListener("DOMContentLoaded", function(){
         <span class="material-icons md-24 md-light" onclick="lightbox_close();">close</span>
     </nav>`;
 
-    // fetch and render the next page on scroll
+    if(PAGINATE) {
 
-/*
-    $('pga').addEventListener("scroll", function () {
+        // fetch and render the next page on scroll
 
-        if(page_number >= 0) {
+        $('pga').addEventListener("scroll", function () {
 
-            if ($('pga').scrollHeight - $('pga').scrollTop === $('pga').clientHeight) {
+            if(page_number >= 0) {
 
-                page_number++;
-                // page_number = (page_number>(total_pages-1)) ? total_pages-1 : page_number;
-                page_number = (page_number>(total_pages-1)) ? -1 : page_number;
-                auto_paginate();
+                if ($('pga').scrollHeight - $('pga').scrollTop === $('pga').clientHeight) {
+
+                    page_number++;
+                    // page_number = (page_number>(total_pages-1)) ? total_pages-1 : page_number;
+                    page_number = (page_number>(total_pages-1)) ? -1 : page_number;
+
+                    var start = Date.now();
+                    auto_paginate();
+                    var t = Date.now() - start;
+                    console.log(
+                        `${catalog.length} thumbs in ${t} ms = ~${
+                            (Math.ceil(1000/t) * catalog.length).toLocaleString()
+                        } thumbs/sec`
+                    );
+                }
             }
 
-        }
-
-    }, false);
-*/
-    const start = Date.now();
-
-    auto_paginate(); // fetch and render the first page
-
-    if(!PAGINATE) {
-        const end = Date.now();
-        const t = end - start;
-        const num = (Math.ceil(1000/t) * catalog.length).toLocaleString();
-        const perflog = `${catalog.length} f : ${t} ms : ~= ${num} fps`;
-        echo(perflog);
+        }, false);
     }
+
+    // fetch and render the first page
+
+    var start = Date.now();
+    auto_paginate();
+    var t = Date.now() - start;
+    console.log(
+        `${catalog.length} thumbs in ${t} ms = ~${
+            (Math.ceil(1000/t) * catalog.length).toLocaleString()
+        } thumbs/sec`
+    );
 
 });
