@@ -25,8 +25,9 @@ var
     window_width, window_height, scrollbar_width, viewport_width;
 
 var nua = navigator.userAgent;
-var is_android = ((nua.indexOf('Mozilla/5.0') > -1 && nua.indexOf('Android ') > -1 &&     nua.indexOf('AppleWebKit') > -1) && !(nua.indexOf('Chrome') > -1));
+var is_android = ((nua.indexOf('Mozilla/5.0') > -1 && nua.indexOf('Android ') > -1 && nua.indexOf('AppleWebKit') > -1) && !(nua.indexOf('Chrome') > -1));
 
+console.log(is_android);
 
 const
     responsive_columns = [0,0,2,2,2,2,3,3,4,4,5,5,5,5,6,6,7,7,8,8,9],
@@ -40,7 +41,7 @@ const
 
 const
     DOWNLOAD_LIMIT = 0,
-    PAGINATE = (is_android) ? no : yes;
+    PAGINATE = yes;
 
 
 if(DOWNLOAD_LIMIT) {
@@ -196,7 +197,7 @@ function fetch_page() {
 }
 
 
-function adaptive_density(mode, id, window_size) {
+function adaptive_density(mode, id, presentation_size) {
 
    var
         img_width,
@@ -204,9 +205,9 @@ function adaptive_density(mode, id, window_size) {
         aspect = catalog[id][WIDTH] / catalog[id][HEIGHT],
         axis = (aspect > 1) ? 0 : 1;
 
-    if(catalog[id][axis] <= window_size) {
+    if(catalog[id][axis] <= presentation_size) {
 
-        // SD photos
+        // SD renditions
 
         return (axis) ? catalog[id][HEIGHT] : catalog[id][WIDTH];
 
@@ -220,26 +221,26 @@ function adaptive_density(mode, id, window_size) {
 
             var adr = dpr; // adaptive density ratio = devicePixelRatio
 
-            while(Math.floor(adr) > 1 && window_size * adr > catalog[id][axis]) {
+            while(Math.floor(adr) > 1 && presentation_size * adr > catalog[id][axis]) {
 
                 adr -= 1; // decimate adr
             }
 
-            return Math.floor(window_size * adr);
+            return Math.floor(presentation_size * adr);
 
         } else {
 
             // Mode 2 : fixed density
 
-            if(Math.floor(catalog[id][HEIGHT] / dpr) <= window_size) {
+            if(Math.floor(catalog[id][axis] / dpr) <= presentation_size) {
 
-                // Small photos (HD and SuperHD < window size)
+                // HD renditions
 
                 return (axis) ? Math.floor(catalog[id][HEIGHT] / dpr) : Math.floor(catalog[id][WIDTH] / dpr);
 
             } else {
 
-                // Large photos (HD and SuperHD > window size)
+                // SuperHD renditions
 
                 return (axis) ? Math.floor(window_height * dpr) : Math.floor(window_width * dpr);
             }
@@ -406,6 +407,23 @@ function lightbox_open(n) { // n = ROW
     last_n = n;
 }
 
+function nextpage() {
+    if ($('pga').scrollHeight - $('pga').scrollTop === $('pga').clientHeight) {
+
+        page_number++;
+        // page_number = (page_number>(total_pages-1)) ? total_pages-1 : page_number;
+        page_number = (page_number>(total_pages-1)) ? -1 : page_number;
+
+        var start = Date.now();
+        auto_paginate();
+        var t = Date.now() - start;
+        console.log(
+            `scroll: ${pglen} thumbs in ${t} ms = ~${
+                (Math.ceil(1000/t) * catalog.length).toLocaleString()
+            } thumbs/sec`
+        );
+    }
+}
 
 // And Here We Go
 
@@ -421,12 +439,11 @@ document.addEventListener("DOMContentLoaded", function(){
         <header>
             <nav class="left">
                 <span class="material-icons md-24 md-light md-inactive">menu</span>
-                <span class="logo">LiteBox</span>
             </nav>
             <nav></nav>
             <nav></nav>
         </header>
-        <div id="pga">
+        <div id="pga" onscroll="nextpage();">
             <div id="gallery"></div>
         </div>
     </div>
@@ -443,7 +460,7 @@ document.addEventListener("DOMContentLoaded", function(){
         <span class="material-icons md-24 md-light" onclick="nfobox_toggle();">info_outline</span>
         <span class="material-icons md-24 md-light" onclick="lightbox_close();">close</span>
     </nav>`;
-
+/*
     //if(PAGINATE) {
 
         // fetch and render the next page on scroll
@@ -473,7 +490,7 @@ document.addEventListener("DOMContentLoaded", function(){
 
         }, false);
     //}
-
+*/
     // fetch and render the first page
 
     var start = Date.now();
@@ -486,3 +503,6 @@ document.addEventListener("DOMContentLoaded", function(){
     );
 
 });
+
+
+
