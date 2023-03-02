@@ -424,7 +424,7 @@ function onScroll() {
                 (Math.ceil(1000/t) * catalog.length).toLocaleString()
             } thumbs/sec`
             console.log(fred);
-            $('rspeed').innerHTML=fred;
+            //$('rspeed').innerHTML=fred;
         }
     }
 }
@@ -481,7 +481,7 @@ document.addEventListener("DOMContentLoaded", function(){
             (Math.ceil(1000/t) * catalog.length).toLocaleString()
         } thumbs/sec`
     console.log(fred);
-    $('rspeed').innerHTML=fred;
+    //$('rspeed').innerHTML=fred;
 });
 
 
