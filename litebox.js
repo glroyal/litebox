@@ -407,21 +407,25 @@ function lightbox_open(n) { // n = ROW
     last_n = n;
 }
 
-function nextpage() {
-    if ($('pga').scrollHeight - $('pga').scrollTop === $('pga').clientHeight) {
+function onScroll() {
 
-        page_number++;
-        // page_number = (page_number>(total_pages-1)) ? total_pages-1 : page_number;
-        page_number = (page_number>(total_pages-1)) ? -1 : page_number;
+    if(page_number >= 0) {
 
-        var start = Date.now();
-        auto_paginate();
-        var t = Date.now() - start;
-        console.log(
-            `scroll: ${pglen} thumbs in ${t} ms = ~${
+        if($('pga').scrollHeight - $('pga').scrollTop - $('pga').clientHeight < 1) {
+
+            page_number++;
+            // page_number = (page_number>(total_pages-1)) ? total_pages-1 : page_number;
+            page_number = (page_number>(total_pages-1)) ? -1 : page_number;
+
+            var start = Date.now();
+            auto_paginate();
+            var t = Date.now() - start;
+            var fred = `scroll: ${pglen} thumbs in ${t} ms = ~${
                 (Math.ceil(1000/t) * catalog.length).toLocaleString()
             } thumbs/sec`
-        );
+            console.log(fred);
+            $('rspeed').innerHTML=fred;
+        }
     }
 }
 
@@ -440,10 +444,10 @@ document.addEventListener("DOMContentLoaded", function(){
             <nav class="left">
                 <span class="material-icons md-24 md-light md-inactive">menu</span>
             </nav>
-            <nav></nav>
+            <nav id="rspeed"></nav>
             <nav></nav>
         </header>
-        <div id="pga" onscroll="nextpage();">
+        <div id="pga">
             <div id="gallery"></div>
         </div>
     </div>
@@ -460,48 +464,24 @@ document.addEventListener("DOMContentLoaded", function(){
         <span class="material-icons md-24 md-light" onclick="nfobox_toggle();">info_outline</span>
         <span class="material-icons md-24 md-light" onclick="lightbox_close();">close</span>
     </nav>`;
-/*
-    //if(PAGINATE) {
+
+    if(PAGINATE) {
 
         // fetch and render the next page on scroll
 
-        $('pga').addEventListener("scroll", function () {
+        $('pga').addEventListener("scroll", onScroll);
+    }
 
-            if(page_number >= 0) {
-
-                console.log('trigger');
-
-                if ($('pga').scrollHeight - $('pga').scrollTop === $('pga').clientHeight) {
-
-                    page_number++;
-                    // page_number = (page_number>(total_pages-1)) ? total_pages-1 : page_number;
-                    page_number = (page_number>(total_pages-1)) ? -1 : page_number;
-
-                    var start = Date.now();
-                    auto_paginate();
-                    var t = Date.now() - start;
-                    console.log(
-                        `scroll: ${pglen} thumbs in ${t} ms = ~${
-                            (Math.ceil(1000/t) * catalog.length).toLocaleString()
-                        } thumbs/sec`
-                    );
-                }
-            }
-
-        }, false);
-    //}
-*/
     // fetch and render the first page
 
     var start = Date.now();
     auto_paginate();
     var t = Date.now() - start;
-    console.log(
-        `init: ${pglen} thumbs in ${t} ms = ~${
+    var fred = `init: ${pglen} thumbs in ${t} ms = ~${
             (Math.ceil(1000/t) * catalog.length).toLocaleString()
         } thumbs/sec`
-    );
-
+    console.log(fred);
+    $('rspeed').innerHTML=fred;
 });
 
 
