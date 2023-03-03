@@ -197,55 +197,63 @@ function fetch_page() {
 }
 
 
-function adaptive_density(mode, id, presentation_size) {
+function adaptive_density(mode, id, axis, presentation_size) {
 
-   var
-        img_width,
-        img_height,
-        aspect = catalog[id][WIDTH] / catalog[id][HEIGHT],
-        axis = (aspect > 1) ? 0 : 1;
+    // mode = ADR mode (1 or 2)
+    // id = id of photo in catalog
+    // axis = WIDTH (0) or HEIGHT (1)
+    // presentation_size = length or height of display window
 
-    if(catalog[id][axis] <= presentation_size) {
+    var
+        adjusted_size,  // return value
+        adr;            // adr = adaptive density ratio (mode 1 only)
 
-        // SD renditions
+    if(mode == 1) {
 
-        return (axis) ? catalog[id][HEIGHT] : catalog[id][WIDTH];
+        adr = dpr; // dpr = devicePixelRatio
+
+        while(Math.floor(adr) > 1 && presentation_size * adr > catalog[id][axis]) {
+
+            adr -= 1; // decimate adr
+        }
+
+        adjusted_size = Math.floor(presentation_size * adr);
 
     } else {
 
-        mode = (dpr==1) ? 1 : mode;  /* force non-SuperHD displays to fixed size mode */
+        if(axis==HEIGHT) {
 
-        if(mode==1) {
+            if(catalog[id][HEIGHT] <= presentation_size) {
 
-            // Mode 1 : fixed size
+                adjusted_size  = catalog[id][HEIGHT];
 
-            var adr = dpr; // adaptive density ratio = devicePixelRatio
+            } else if (catalog[id][HEIGHT] / dpr <= presentation_size) {
 
-            while(Math.floor(adr) > 1 && presentation_size * adr > catalog[id][axis]) {
-
-                adr -= 1; // decimate adr
-            }
-
-            return Math.floor(presentation_size * adr);
-
-        } else {
-
-            // Mode 2 : fixed density
-
-            if(Math.floor(catalog[id][axis] / dpr) <= presentation_size) {
-
-                // HD renditions
-
-                return (axis) ? Math.floor(catalog[id][HEIGHT] / dpr) : Math.floor(catalog[id][WIDTH] / dpr);
+                adjusted_size = Math.floor(catalog[id][HEIGHT] / dpr);
 
             } else {
 
-                // SuperHD renditions
+                adjusted_size = Math.floor(presentation_size * dpr);
+            }
 
-                return (axis) ? Math.floor(window_height * dpr) : Math.floor(window_width * dpr);
+        } else {
+
+            if(catalog[id][WIDTH] <= presentation_size) {
+
+                adjusted_size  = catalog[id][WIDTH];
+
+            } else if(catalog[id][WIDTH] / dpr <= presentation_size) {
+
+                adjusted_size = Math.floor(catalog[id][WIDTH] / dpr);
+
+            } else  {
+
+                adjusted_size = Math.floor(presentation_size * dpr);
             }
         }
     }
+
+    return adjusted_size;
 }
 
 
@@ -280,7 +288,7 @@ function auto_paginate() {
 
                 // compute the adaptive density ratio,
 
-                img_width = adaptive_density(1, list[i], render_width);
+                img_width = adaptive_density(1, list[i], WIDTH, render_width);
 
                 // and compile a thumbnail div.
 
@@ -358,6 +366,8 @@ function lightbox_close() {
 
 function lightbox_open(n) { // n = ROW
 
+//    get_window_geometry();
+
     // Show the selected photo in an overlay window
 
     var
@@ -372,18 +382,20 @@ function lightbox_open(n) { // n = ROW
     if(aspect<1) {
 
         // portrait
-        img_height = adaptive_density(2,n,window_height);
+        img_height = adaptive_density(2,n,HEIGHT,window_height);
         img_width = Math.floor(aspect * img_height);
+
+        vumode = (img_height>window_height) ? 'SuperHD' : ((img_height<720)? 'SD' : 'HD');
 
     } else {
 
         // landscape
-        img_width = adaptive_density(2,n,window_width);
+        img_width = adaptive_density(2,n,WIDTH,window_width);
         img_height = Math.floor(img_width / aspect);
-    }
 
-    vumode = (Math.max(img_width,img_height) > Math.max(window_width,window_height)) ? 'SuperHD' :
-        ((dpr>1 || img_height>720) ? 'HD' : 'SD');
+        vumode = (img_width>window_width) ? 'SuperHD' : ((img_width<1280)? 'SD' : 'HD');
+
+    }
 
     $('nfobox').style.top = (window_height-260)/2 + 'px';
     $('nfobox').style.left = (window_width-260)/2 + 'px';
@@ -392,7 +404,7 @@ function lightbox_open(n) { // n = ROW
         <table>
             <tr><td class="stub">Picsum ID:</td><td class="col">#&thinsp;${catalog[n][ID]}</td></tr>
             <tr><td class="stub">Author:</td><td class="col"><a href="https://unsplash.com/photos/${catalog[n][UNSPL]}" target="_blank">${authors[catalog[n][AUTH]]}</a></td></tr>
-            <tr><td class="stub">Image:</td><td class="col">${catalog[n][WIDTH]+'&thinsp;x&thinsp;'+catalog[n][HEIGHT]}</td></tr>
+            <tr><td class="stub">Catalog:</td><td class="col">${catalog[n][WIDTH]+'&thinsp;x&thinsp;'+catalog[n][HEIGHT]}</td></tr>
             <tr><td class="stub">Window:</td><td class="col">${window_width}&thinsp;x&thinsp;${window_height}</td></tr>
             <tr><td class="stub">Render:</td><td class="col">${img_width + '&thinsp;x&thinsp;' + img_height}</td></tr>
             <tr><td class="stub">Density:</td><td class="col">${vumode}</td></tr>

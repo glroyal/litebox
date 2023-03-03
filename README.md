@@ -79,60 +79,64 @@ We define a **SuperHD display** to be any device with a devicePixelRatio > 1, an
 **Listing 1: Adaptive Density**
 
 ```javascript
-function adaptive_density(mode, id, presentation_size) {
 
-   var
-        img_width,
-        img_height,
-        aspect = catalog[id][WIDTH] / catalog[id][HEIGHT],
-        axis = (aspect > 1) ? 0 : 1;
+function adaptive_density(mode, id, axis, presentation_size) {
 
-    if(catalog[id][axis] <= presentation_size) {
+    // mode = ADR mode (1 or 2)
+    // id = id of photo in catalog
+    // axis = WIDTH (0) or HEIGHT (1)
+    // presentation_size = max(width,height) of display window
 
-        // SD photos
+    var
+        adjusted_size,  // return value
+        adr;            // adr = adaptive density ratio (mode 1 only)
 
-        return (axis) ? catalog[id][HEIGHT] : catalog[id][WIDTH];
+    if(mode == 1) {
+
+        adr = dpr; // dpr = devicePixelRatio
+
+        while(Math.floor(adr) > 1 && presentation_size * adr > catalog[id][axis]) {
+
+            adr -= 1; // decimate adr
+        }
+
+        adjusted_size = Math.floor(presentation_size * adr);
 
     } else {
 
-        // force non-SuperHD displays to fixed size mode
+        if(axis==HEIGHT) {
 
-        mode = (dpr==1) ? 1 : mode;  
+            if(catalog[id][HEIGHT] <= presentation_size) {
 
-        if(mode==1) {
+                adjusted_size  = catalog[id][HEIGHT];
 
-            // Mode 1 : fixed size
+            } else if (catalog[id][HEIGHT] / dpr <= presentation_size) {
 
-            var adr = dpr; // adaptive density ratio = devicePixelRatio
-
-            while(Math.floor(adr) > 1 && 
-                presentation_size * adr > catalog[id][axis]) {
-
-                adr -= 1; // decimate adr
-            }
-
-            return presentation_size * adr;
-
-        } else {
-
-            // Mode 2 : fixed density
-
-            if(Math.floor(catalog[id][HEIGHT] / dpr) <= presentation_size) {
-
-                // Small photos (HD and SuperHD < window size)
-
-                return (axis) ? Math.floor(catalog[id][HEIGHT] / dpr) : 
-                    Math.floor(catalog[id][WIDTH] / dpr);
+                adjusted_size = Math.floor(catalog[id][HEIGHT] / dpr);
 
             } else {
 
-                // Large photos (HD and SuperHD > window size)
+                adjusted_size = Math.floor(presentation_size * dpr);
+            }
 
-                return (axis) ? Math.floor(window_height * dpr) : 
-                    Math.floor(window_width * dpr);
+        } else {
+
+            if(catalog[id][WIDTH] <= presentation_size) {
+
+                adjusted_size  = catalog[id][WIDTH];
+
+            } else if(catalog[id][WIDTH] / dpr <= presentation_size) {
+
+                adjusted_size = Math.floor(catalog[id][WIDTH] / dpr);
+
+            } else  {
+
+                adjusted_size = Math.floor(presentation_size * dpr);
             }
         }
     }
+
+    return adjusted_size;
 }
 
 ```
