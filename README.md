@@ -8,13 +8,17 @@
 
 **LiteBox** is a Graphical Photo Browser that renders photos with the finest practical image detail on all devices. It does not require a SuperHD video display, but takes full advantage of one.
 
-LiteBox is written in **Computed HTML**, a programming model where the tags describing a web page are compiled in RAM, then passed to the browser's HTML interpreter to render.
+LiteBox is written in **Computed HTML**, a programming model where the tags describing a web page are compiled in RAM and executed by the browser's HTML interpreter.
 
-It introduces **Adaptive Density**, a strategy for optimizing image quality by adjusting the download resolution for each image to match the pixel density of the screen it's being displayed on. 
+LiteBox introduces **Adaptive Density**, a strategy for optimizing image quality by adjusting the download resolution for each image to match the pixel density of the screen it's being displayed on. 
+
+
 
 ## You're Soaking In It
 
-[**View the Live Demo**](https://glroyal.github.io/litebox/) on your dektop, notebook, tablet and phone.
+[**View the Live Demo**](https://glroyal.github.io/litebox/) on your dektop, notebook, tablet and phone. 
+
+
 
 ## Make It Yours
 
@@ -24,13 +28,15 @@ It introduces **Adaptive Density**, a strategy for optimizing image quality by a
 
 * *"Absorb what is useful, discard what is useless, and add what is specifically your own"* -- Bruce Lee
 
+## 
+
 ## Computed HTML
 
-Computed HTML achieves native app performance by exploiting the latent potential of an overlooked JavaScript language construct. 
+Computed HTML achieves native app performance by using [Element.innerHTML]([Element.innerHTML - Web APIs | MDN](https://developer.mozilla.org/en-US/docs/Web/API/Element/innerHTML)) as an interpreter to render layouts compiled in RAM.
 
-[**Element.innerHTML**]([Element.innerHTML - Web APIs | MDN](https://developer.mozilla.org/en-US/docs/Web/API/Element/innerHTML)) reads or writes tranches of the DOM as a string of HTML tags. It is orders of magnitude faster than conventional Dynamic HTML. 
+It is orders of magnitude faster than conventional Dynamic HTML because it generates a custom DOM as a byproduct of rendering tags, instead of using slow JavaScript operators to manipulate a DOM in situ.
 
-Sub-second Time-To-Interactive (TTI) is typical for Computed HTML pages regardless of layout complexity, because element.innerHTML is highly optimized for rendering DOMs from strings of HTML tags.
+Sub-second Time-To-Interactive (TTI) is typical for Computed HTML regardless of layout complexity.
 
 
 
@@ -44,11 +50,9 @@ Adaptive Density is an algorithm that holds either the presentation size or the 
 
 We define a **SuperHD display** to be any device with a devicePixelRatio > 1, and a **SuperHD rendition** to be any rendition on a SuperHD display in which there is a 1:1 ratio of image pixels to screen pixels.
 
-**Fixed Size Mode** always scales photos to the presentation size, even if the browser has to upsample the image to fit. This mode is used primarily for thumbnails, because upsampling only occurs in the event that the native size of an image is smaller than the presentation size, which is a rare but possible event. 
+**Constant Size Mode** always scales photos to the presentation size, even if the browser has to upsample the image to fit. This mode is used primarily for thumbnails, because upsampling only occurs in the event that the native size of an image is smaller than the presentation size, which is a rare but possible event. 
 
-**Fixed Density Mode** always scales photos to the (presentation size * devicePixelRatio). It will always render an image in SuperHD on a SuperHD display, but the image dimensions may be smaller than the presentation size.
-
-
+**Constant Density Mode** always scales photos to the (presentation size * devicePixelRatio). It will always render an image in SuperHD on a SuperHD display, but the image dimensions may be smaller than the presentation size.
 
 ### notes
 
@@ -57,8 +61,36 @@ We define a **SuperHD display** to be any device with a devicePixelRatio > 1, an
 - Adaptive Density is a function of image resolution vs devicePixelRatio vs presentation size. This function may be applied to an image whenever the window geometry changes. The rendition may shift between SD, HD, and SuperHD as the window is resized, or the device is rotated.
 
 - None of the above applies for SD or HD displays (devicePixelRatio == 1), or *fixed size* mode when the Adaptive Density Ratio (ADR) has been decimated to 1. In that case, the image is downloaded at the presentation size, which conserves bandwidth on SD and HD devices by not downloading more image detail than the display can resolve.
-  
-  
+
+
+
+## Lorem Picsum
+
+**[Lorem Picsum](https://picsum.photos/)** is an image placeholder service that allows us to download arbitrary photos at arbitrary sizes to demonstrate the placement of images in a layout.
+
+Their generous contribution of a scaling image server and photo collection to the public interest made this project possible.
+
+Information about Picsum placeholders is stored in an array called the *catalog*:
+
+```javascript
+const catalog = [
+    // [width, height, picsum ID, author ID, unsplash ID, row]
+    [5000,3333,396,482,"ko-wCySsj-I",0],
+    [4240,2832,667,283,"XMcoTHgNcQA",1],
+    ...
+    [3872,2592,348,40,"mVhd5QVlDWw",892]
+];
+```
+
+*Width, Height, Picsum ID* = data to access the photo
+
+*Author ID* = Index of the author's name in the author table for photo credit
+
+*Unsplash ID* = URL path to the photo on [**Unsplash**](https://unsplash.com/about), an archive of free-to-use high-resolution photos
+
+*Row* = the ordinal number of the item in the catalog array
+
+
 
 **Table 1: geometries of a small sample of video displays**
 
@@ -79,7 +111,6 @@ We define a **SuperHD display** to be any device with a devicePixelRatio > 1, an
 **Listing 1: Adaptive Density**
 
 ```javascript
-
 function adaptive_density(mode, id, axis, presentation_size) {
 
     // mode = ADR mode (1 or 2)
@@ -95,7 +126,8 @@ function adaptive_density(mode, id, axis, presentation_size) {
 
         adr = dpr; // dpr = devicePixelRatio
 
-        while(Math.floor(adr) > 1 && presentation_size * adr > catalog[id][axis]) {
+        while(Math.floor(adr) > 1 && 
+            presentation_size * adr > catalog[id][axis]) {
 
             adr -= 1; // decimate adr
         }
@@ -138,34 +170,9 @@ function adaptive_density(mode, id, axis, presentation_size) {
 
     return adjusted_size;
 }
-
 ```
 
-### Lorem Picsum
-
-**[Lorem Picsum](https://picsum.photos/)** is an image placeholder service that allows you to download arbitrary photos at arbitrary sizes to demonstrate the placement of images in a layout.
-
-Information about Picsum placeholders is stored in an array called the *catalog*:
-
-```javascript
-const catalog = [
-    // [width, height, picsum ID, author ID, unsplash ID, row]
-    [5000,3333,396,482,"ko-wCySsj-I",0],
-    [4240,2832,667,283,"XMcoTHgNcQA",1],
-    ...
-    [3872,2592,348,40,"mVhd5QVlDWw",892]
-];
-```
-
-*Width, Height, Picsum ID* = data to access the photo
-
-*Author ID* = Index of the author's name in the author table for photo credit
-
-*Unsplash ID* = URL path to the photo on [**Unsplash**](https://unsplash.com/about), an archive of free-to-use high-resolution photos
-
-*Row* = the ordinal number of the item in the catalog array
-
-## 
+### 
 
 ## Wisdom
 
