@@ -34,7 +34,7 @@ LiteBox introduces **Adaptive Density**, a strategy for optimizing image quality
 
 Computed HTML achieves native app performance by using **[element.innerHTML](https://developer.mozilla.org/en-US/docs/Web/API/Element/innerHTML)** as an interpreter to render layouts compiled in RAM.
 
-It is orders of magnitude faster than conventional Dynamic HTML because instead of using JavaScript operators to build a DOM in situ, innerHTML builds the DOM as a byproduct of rendering the tags. 
+It is orders of magnitude faster than conventional Dynamic HTML because instead of using JavaScript operators to build a DOM in situ, innerHTML renders a stream of layout tags which builds a DOM as a byproduct. 
 
 Sub-second Time-To-Interactive (TTI) is typical for Computed HTML regardless of layout complexity.
 
@@ -116,27 +116,29 @@ function adaptive_density(mode, id, axis, presentation_size) {
     // mode = ADR mode (1 or 2)
     // id = id of photo in catalog
     // axis = WIDTH (0) or HEIGHT (1)
-    // presentation_size = max(width,height) of display window
+    // presentation_size = length of axis in pixels
 
     var
         adjusted_size,  // return value
-        adr;            // adr = adaptive density ratio (mode 1 only)
+        adr;    // adr = adaptive density ratio (mode 1 only)
 
-    if(mode == 1) {
+    mode = (dpr>1) ? mode : 1;  // force sd and hd screens to mode 1
 
-        adr = dpr; // dpr = devicePixelRatio
+    if(mode == 1) {  // constant size mode
 
-        while(Math.floor(adr) > 1 && 
-            presentation_size * adr > catalog[id][axis]) {
+        adr = dpr;  // dpr = devicePixelRatio
 
-            adr -= 1; // decimate adr
+        while(Math.floor(adr) > 1
+            && presentation_size * adr > catalog[id][axis]) {
+
+            adr -= 1;   // decimate adr
         }
 
         adjusted_size = Math.floor(presentation_size * adr);
 
-    } else {
+    } else {    // constant density mode
 
-        if(axis==HEIGHT) {
+        if(axis==HEIGHT) {  // portrait
 
             if(catalog[id][HEIGHT] <= presentation_size) {
 
@@ -151,7 +153,7 @@ function adaptive_density(mode, id, axis, presentation_size) {
                 adjusted_size = Math.floor(presentation_size * dpr);
             }
 
-        } else {
+        } else { // landscape
 
             if(catalog[id][WIDTH] <= presentation_size) {
 
