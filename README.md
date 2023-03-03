@@ -32,7 +32,7 @@ LiteBox introduces **Adaptive Density**, a strategy for optimizing image quality
 
 ## Computed HTML
 
-Computed HTML achieves native app performance by using [element.innerHTML]([Element.innerHTML - Web APIs | MDN](https://developer.mozilla.org/en-US/docs/Web/API/Element/innerHTML)) as an interpreter to render layouts compiled in RAM.
+Computed HTML achieves native app performance by using [element.innerHTML]([https://developer.mozilla.org/en-US/docs/Web/API/Element/innerHTML) as an interpreter to render layouts compiled in RAM.
 
 It is orders of magnitude faster than conventional Dynamic HTML because instead of using JavaScript operators to build a DOM in situ, innerHTML builds the DOM as a byproduct of rendering the tags. 
 
