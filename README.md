@@ -26,15 +26,15 @@ LiteBox introduces **Adaptive Density**, a strategy for optimizing image quality
 
 * Drag the file index.html into an open browser window
 
-* *"Absorb what is useful, discard what is useless, and add what is specifically your own"* -- Bruce Lee
-
-## 
+* Browse the source
+  
+  
 
 ## Computed HTML
 
-Computed HTML achieves native app performance by using [Element.innerHTML]([Element.innerHTML - Web APIs | MDN](https://developer.mozilla.org/en-US/docs/Web/API/Element/innerHTML)) as an interpreter to render layouts compiled in RAM.
+Computed HTML achieves native app performance by using [element.innerHTML]([Element.innerHTML - Web APIs | MDN](https://developer.mozilla.org/en-US/docs/Web/API/Element/innerHTML)) as an interpreter to render layouts compiled in RAM.
 
-It is orders of magnitude faster than conventional Dynamic HTML because it generates a custom DOM as a byproduct of rendering tags, instead of using slow JavaScript operators to manipulate a DOM in situ.
+It is orders of magnitude faster than conventional Dynamic HTML because instead of using JavaScript operators to build a DOM in situ, innerHTML builds the DOM as a byproduct of rendering the tags. 
 
 Sub-second Time-To-Interactive (TTI) is typical for Computed HTML regardless of layout complexity.
 
@@ -68,7 +68,7 @@ We define a **SuperHD display** to be any device with a devicePixelRatio > 1, an
 
 **[Lorem Picsum](https://picsum.photos/)** is an image placeholder service that allows us to download arbitrary photos at arbitrary sizes to demonstrate the placement of images in a layout.
 
-Their generous contribution of a scaling image server and photo collection to the public interest made this project possible.
+Their generous contribution of a scaling image server and photo collection to the public interest made this project possible. 
 
 Information about Picsum placeholders is stored in an array called the *catalog*:
 
@@ -90,7 +90,7 @@ const catalog = [
 
 *Row* = the ordinal number of the item in the catalog array
 
-
+---
 
 **Table 1: geometries of a small sample of video displays**
 
@@ -106,7 +106,7 @@ const catalog = [
 | 6.8" Galaxy S23 Ultra     | 1440x3088  | 4.00 | 501 | 360x772   |
 | 14.6" Galaxy Tab S8 Ultra | 1848x2960  | 4.00 | 240 | 462x740   |
 
-
+---
 
 **Listing 1: Adaptive Density**
 
@@ -172,7 +172,7 @@ function adaptive_density(mode, id, axis, presentation_size) {
 }
 ```
 
-### 
+
 
 ## Wisdom
 
