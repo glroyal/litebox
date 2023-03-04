@@ -197,31 +197,93 @@ function fetch_page() {
 }
 
 
+
+
+
+
+
+
+
+
+
 function adaptive_density(mode, id, axis, presentation_size) {
 
     // mode = ADR mode (1 or 2)
     // id = id of photo in catalog
     // axis = WIDTH (0) or HEIGHT (1)
-    // presentation_size = length or height of display window
+    // presentation_size = length of axis in pixels
 
     var
         adjusted_size,  // return value
-        adr;            // adr = adaptive density ratio (mode 1 only)
+        adr,    // adaptive density ratio (mode 1 only)
+        aspect; // width or height
 
-    if(mode == 1) {
+    mode = (dpr>1) ? mode : 1;  // force sd and hd screens to constant size mode
 
-        adr = dpr; // dpr = devicePixelRatio
+    if(mode == 1) {  // constant size mode
 
-        while(Math.floor(adr) > 1 && presentation_size * adr > catalog[id][axis]) {
+        adr = dpr;  // devicePixelRatio
 
-            adr -= 1; // decimate adr
+        while(Math.floor(adr) > 1  && presentation_size * adr > catalog[id][axis]) {
+
+            adr -= 1;   // decimate adr
         }
 
         adjusted_size = Math.floor(presentation_size * adr);
 
-    } else {
+    } else {    // constant density mode
 
-        if(axis==HEIGHT) {
+        aspect = Math.max(catalog[id][WIDTH],catalog[id][HEIGHT]);
+
+        if(aspect <= presentation_size) {
+
+            adjusted_size  = catalog[id][axis];
+
+        } else if(aspect / dpr <= presentation_size) {
+
+            adjusted_size = Math.floor(catalog[id][axis] / dpr);
+
+        } else {
+
+            adjusted_size = Math.floor(presentation_size * dpr);
+        }
+    }
+
+    return adjusted_size;
+}
+
+
+/*
+
+function adaptive_density(mode, id, axis, presentation_size) {
+
+    // mode = ADR mode (1 or 2)
+    // id = id of photo in catalog
+    // axis = WIDTH (0) or HEIGHT (1)
+    // presentation_size = length of axis in pixels
+
+    var
+        adjusted_size,  // return value
+        adr,    // adr = adaptive density ratio (mode 1 only)
+        aspect; // width or height
+
+    mode = (dpr>1) ? mode : 1;  // force sd and hd screens to constant size mode
+
+    if(mode == 1) {  // constant size mode
+
+        adr = dpr;  // dpr = devicePixelRatio
+
+        while(Math.floor(adr) > 1
+            && presentation_size * adr > catalog[id][axis]) {
+
+            adr -= 1;   // decimate adr
+        }
+
+        adjusted_size = Math.floor(presentation_size * adr);
+
+    } else {    // constant density mode
+
+        if(axis==HEIGHT) {  // portrait
 
             if(catalog[id][HEIGHT] <= presentation_size) {
 
@@ -236,7 +298,7 @@ function adaptive_density(mode, id, axis, presentation_size) {
                 adjusted_size = Math.floor(presentation_size * dpr);
             }
 
-        } else {
+        } else { // landscape
 
             if(catalog[id][WIDTH] <= presentation_size) {
 
@@ -256,7 +318,7 @@ function adaptive_density(mode, id, axis, presentation_size) {
     return adjusted_size;
 }
 
-
+*/
 
 function auto_paginate() {
 
