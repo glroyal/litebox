@@ -2,8 +2,6 @@
 
 > An Adaptive Density Graphical Photo Browser written in Computed HTML
 
-
-
 ![litebox.jpg](litebox.jpg)
 
 ## 
@@ -16,13 +14,9 @@ LiteBox is written in **Computed HTML**, a programming model where the tags desc
 
 LiteBox introduces **Adaptive Density**, a strategy for optimizing image quality by adjusting the download resolution for each image to match the pixel density of the screen it's being displayed on. 
 
-
-
 ## You're Soaking In It
 
 [**View the Live Demo**](https://glroyal.github.io/litebox/) on your dektop, notebook, tablet and phone. 
-
-
 
 ## Make It Yours
 
@@ -31,8 +25,6 @@ LiteBox introduces **Adaptive Density**, a strategy for optimizing image quality
 * Drag the file index.html into an open browser window
 
 * Browse the source and adapt what you like to your own projects
-  
-  
 
 ## Computed HTML
 
@@ -41,8 +33,6 @@ Computed HTML achieves native app performance by using **[element.innerHTML](htt
 It is orders of magnitude faster than conventional Dynamic HTML because instead of using JavaScript operators to build a DOM in situ, innerHTML interprets a stream of tags which build a DOM as a byproduct of rendering the layout. 
 
 Sub-second Time-To-Interactive (TTI) is typical for Computed HTML regardless of layout complexity. 
-
-
 
 ## Adaptive Density
 
@@ -65,8 +55,6 @@ We define a `SuperHD display` to be any device with a devicePixelRatio > 1, and 
 - Adaptive Density is a function of image resolution vs devicePixelRatio vs presentation size. This function may be applied to an image whenever the window geometry changes. The rendition may shift between SD, HD, and SuperHD as the window is resized, or the device is rotated.
 
 - None of the above applies for SD or HD displays (devicePixelRatio == 1), or *constant size* mode when the Adaptive Density Ratio (ADR) has been decimated to 1. In that case, the image is downloaded at the presentation size, which conserves bandwidth on SD and HD devices by not downloading more image detail than the display can resolve.
-
-
 
 ## Lorem Picsum
 
@@ -129,11 +117,12 @@ function adaptive_density(mode, id, axis, presentation_size) {
 
     mode = (dpr>1) ? mode : 1;  // force sd and hd screens to constant size mode
 
-    if(mode == 1) {  // constant size mode
+    if(mode == 1) {  // constant area mode
 
         adr = dpr;  // devicePixelRatio
 
-        while(Math.floor(adr) > 1  && presentation_size * adr > catalog[id][axis]) {
+        while(Math.floor(adr) > 1  
+            && presentation_size * adr > catalog[id][axis]) {
 
             adr -= 1;   // decimate adr
         }
@@ -173,10 +162,6 @@ function adaptive_density(mode, id, axis, presentation_size) {
     return adjusted_size;
 }
 ```
-
-
-
-
 
 ## Wisdom
 
