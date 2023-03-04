@@ -26,6 +26,8 @@ LiteBox introduces **Adaptive Density**, a strategy for optimizing image quality
 
 * Browse the source and adapt what you like to your own projects
 
+
+
 ## Computed HTML
 
 Computed HTML achieves native app performance by using **[element.innerHTML](https://developer.mozilla.org/en-US/docs/Web/API/Element/innerHTML)** as an interpreter to render 'source code' consisting of layouts compiled in RAM.
@@ -54,49 +56,25 @@ We define a `SuperHD display` to be any device with a devicePixelRatio > 1, and 
 
 - Adaptive Density is a function of image resolution vs devicePixelRatio vs presentation size. This function may be applied to an image whenever the window geometry changes. The rendition may shift between SD, HD, and SuperHD as the window is resized, or the device is rotated.
 
-- None of the above applies for SD or HD displays (devicePixelRatio == 1), or *constant size* mode when the Adaptive Density Ratio (ADR) has been decimated to 1. In that case, the image is downloaded at the presentation size, which conserves bandwidth on SD and HD devices by not downloading more image detail than the display can resolve.
-
-## Lorem Picsum
-
-**[Lorem Picsum](https://picsum.photos/)** is an image placeholder service that allows us to download arbitrary photos at arbitrary sizes to demonstrate the placement of images in a layout.
-
-Their generous contribution of a scaling image server and photo collection to the public interest made this project possible. 
-
-Information about Picsum placeholders is stored in an array called the *catalog*:
-
-```javascript
-const catalog = [
-    // [width, height, picsum ID, author ID, unsplash ID, row]
-    [5000,3333,396,482,"ko-wCySsj-I",0],
-    [4240,2832,667,283,"XMcoTHgNcQA",1],
-    ...
-    [3872,2592,348,40,"mVhd5QVlDWw",892]
-];
-```
-
-*Width, Height, Picsum ID* = data to access the photo
-
-*Author ID* = Index of the author's name in the author table for photo credit
-
-*Unsplash ID* = URL path to the photo on [**Unsplash**](https://unsplash.com/about), an archive of free-to-use high-resolution photos
-
-*Row* = the ordinal number of the item in the catalog array
+- None of the above applies for SD or HD displays (devicePixelRatio == 1), or *constant area* mode when the Adaptive Density Ratio (ADR) has been decimated to 1. In that case, the image is downloaded at the presentation size, which conserves bandwidth on SD and HD devices by not downloading more image detail than the display can resolve.
 
 ---
 
 **Table 1: geometries of a small sample of video displays**
 
-| device                    | resolution | dpr  | ppi | viewport  |
-| ------------------------- | ---------- | ---- | --- | --------- |
-| 27" PC monitor            | 1920x1080  | 1.00 | 82  | 1920x1080 |
-| 9.7" iPad                 | 768x1024   | 1.00 | 132 | 768x1024  |
-| 27" iMac 2020             | 2560x1440  | 2.00 | 109 | 1280x720  |
-| 12.9" iPad Pro            | 2048x2732  | 2.00 | 264 | 1024x1366 |
-| 3.5" iPhone 4             | 640x960    | 2.00 | 326 | 320x480   |
-| 5.8" Pixel 4a             | 1080x2340  | 2.75 | 443 | 393x851   |
-| 6.1" iPhone 13            | 1170x2532  | 3.00 | 460 | 390x844   |
-| 6.8" Galaxy S23 Ultra     | 1440x3088  | 4.00 | 501 | 360x772   |
-| 14.6" Galaxy Tab S8 Ultra | 1848x2960  | 4.00 | 240 | 462x740   |
+| device                    | resolution | dpr  | ppi             | viewport  |
+| ------------------------- | ---------- | ---- | --------------- | --------- |
+| 27" PC monitor            | 1920x1080  | 1.00 | 82              | 1920x1080 |
+| 9.7" iPad                 | 768x1024   | 1.00 | 132<sup>1</sup> | 768x1024  |
+| 27" iMac 2020             | 2560x1440  | 2.00 | 109<sup>1</sup> | 1280x720  |
+| 12.9" iPad Pro            | 2048x2732  | 2.00 | 264             | 1024x1366 |
+| 3.5" iPhone 4             | 640x960    | 2.00 | 326             | 320x480   |
+| 5.8" Pixel 4a             | 1080x2340  | 2.75 | 443             | 393x851   |
+| 6.1" iPhone 13            | 1170x2532  | 3.00 | 460             | 390x844   |
+| 6.8" Galaxy S23 Ultra     | 1440x3088  | 4.00 | 501             | 360x772   |
+| 14.6" Galaxy Tab S8 Ultra | 1848x2960  | 4.00 | 240             | 462x740   |
+
+<sup>1</sup> It's interesting that a 2011 iPad has a finer dot pitch than a 2020 iMac, despite the iMac being a SuperHD ( "Retina 5K") display.
 
 ---
 
@@ -162,6 +140,36 @@ function adaptive_density(mode, id, axis, presentation_size) {
     return adjusted_size;
 }
 ```
+
+---
+
+## Lorem Picsum
+
+**[Lorem Picsum](https://picsum.photos/)** is an image placeholder service that allows us to download arbitrary photos at arbitrary sizes to demonstrate the placement of images in a layout.
+
+Their generous contribution of a scaling image server and photo collection to the public interest made this project possible.
+
+Information about Picsum placeholders is stored in an array called the *catalog*:
+
+```javascript
+const catalog = [
+    // [width, height, picsum ID, author ID, unsplash ID, row]
+    [5000,3333,396,482,"ko-wCySsj-I",0],
+    [4240,2832,667,283,"XMcoTHgNcQA",1],
+    ...
+    [3872,2592,348,40,"mVhd5QVlDWw",892]
+];
+```
+
+*Width, Height, Picsum ID* = data to access the photo
+
+*Author ID* = Index of the author's name in the author table for photo credit
+
+*Unsplash ID* = URL path to the photo on [**Unsplash**](https://unsplash.com/about), an archive of free-to-use high-resolution photos
+
+*Row* = the ordinal number of the item in the catalog array
+
+
 
 ## Wisdom
 
