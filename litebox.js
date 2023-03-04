@@ -24,11 +24,6 @@ var
 var
     window_width, window_height, scrollbar_width, viewport_width;
 
-var nua = navigator.userAgent;
-var is_android = ((nua.indexOf('Mozilla/5.0') > -1 && nua.indexOf('Android ') > -1 && nua.indexOf('AppleWebKit') > -1) && !(nua.indexOf('Chrome') > -1));
-
-console.log(is_android);
-
 const
     responsive_columns = [0,0,2,2,2,2,3,3,4,4,5,5,5,5,6,6,7,7,8,8,9],
     gutter_size = 8,
@@ -40,9 +35,18 @@ const
 // preferences
 
 const
-    DOWNLOAD_LIMIT = 0,
-    PAGINATE = yes;
+    PAGINATE = yes,
 
+    // LiteBox can render the entire catalog in a few milliseconds, but Lozad will obediently
+    // lazy load megabytes of images, which the user might not bother to look at. Pagination
+    // reduces bandwidth consumption by forcing the user to scroll to load more, which won't
+    // waste extravagant resources on a demonstration the user might only view once.
+
+    // Alternatively, a lazy loader that postpones download until the image is scrolled into
+    // view would allow the whole enchilada to be rendered in one go (check the lozad
+    // documentation).
+
+    DOWNLOAD_LIMIT = 0; // 0 = no limit, else truncate catalog to n = DOWNLOAD_LIMIT photos
 
 if(DOWNLOAD_LIMIT) {
     catalog = catalog.slice(0,DOWNLOAD_LIMIT-1);
@@ -197,30 +201,21 @@ function fetch_page() {
 }
 
 
-
-
-
-
-
-
-
-
-
 function adaptive_density(mode, id, axis, presentation_size) {
 
-    // mode = ADR mode (1 or 2)
+    // mode = 1 (contant area) or 2 (constant density)
     // id = id of photo in catalog
     // axis = WIDTH (0) or HEIGHT (1)
-    // presentation_size = length of axis in pixels
+    // presentation_size = length of axis in density-independent pixels
 
     var
         adjusted_size,  // return value
         adr,    // adaptive density ratio (mode 1 only)
         aspect; // width or height
 
-    mode = (dpr>1) ? mode : 1;  // force sd and hd screens to constant size mode
+    mode = (dpr>1) ? mode : 1;  // force sd and hd screens to constant area mode
 
-    if(mode == 1) {  // constant size mode
+    if(mode == 1) {  // constant area mode
 
         adr = dpr;  // devicePixelRatio
 
@@ -243,82 +238,26 @@ function adaptive_density(mode, id, axis, presentation_size) {
 
             adjusted_size = Math.floor(catalog[id][axis] / dpr);
 
-        } else {
+        } else if(presentation_size * dpr <= catalog[id][axis]) {
+
+            // askeered that in some degenerate case, adaptive density might
+            // request an upsampled photo from the server, so we make sure
+            // the server has enough pixels to cash the density cheque
 
             adjusted_size = Math.floor(presentation_size * dpr);
+
+        } else {
+
+            // if not, take all the pixels and let the browser fit them
+            // to the window
+
+            adjusted_size  = catalog[id][axis];
         }
     }
 
     return adjusted_size;
 }
 
-
-/*
-
-function adaptive_density(mode, id, axis, presentation_size) {
-
-    // mode = ADR mode (1 or 2)
-    // id = id of photo in catalog
-    // axis = WIDTH (0) or HEIGHT (1)
-    // presentation_size = length of axis in pixels
-
-    var
-        adjusted_size,  // return value
-        adr,    // adr = adaptive density ratio (mode 1 only)
-        aspect; // width or height
-
-    mode = (dpr>1) ? mode : 1;  // force sd and hd screens to constant size mode
-
-    if(mode == 1) {  // constant size mode
-
-        adr = dpr;  // dpr = devicePixelRatio
-
-        while(Math.floor(adr) > 1
-            && presentation_size * adr > catalog[id][axis]) {
-
-            adr -= 1;   // decimate adr
-        }
-
-        adjusted_size = Math.floor(presentation_size * adr);
-
-    } else {    // constant density mode
-
-        if(axis==HEIGHT) {  // portrait
-
-            if(catalog[id][HEIGHT] <= presentation_size) {
-
-                adjusted_size  = catalog[id][HEIGHT];
-
-            } else if (catalog[id][HEIGHT] / dpr <= presentation_size) {
-
-                adjusted_size = Math.floor(catalog[id][HEIGHT] / dpr);
-
-            } else {
-
-                adjusted_size = Math.floor(presentation_size * dpr);
-            }
-
-        } else { // landscape
-
-            if(catalog[id][WIDTH] <= presentation_size) {
-
-                adjusted_size  = catalog[id][WIDTH];
-
-            } else if(catalog[id][WIDTH] / dpr <= presentation_size) {
-
-                adjusted_size = Math.floor(catalog[id][WIDTH] / dpr);
-
-            } else  {
-
-                adjusted_size = Math.floor(presentation_size * dpr);
-            }
-        }
-    }
-
-    return adjusted_size;
-}
-
-*/
 
 function auto_paginate() {
 

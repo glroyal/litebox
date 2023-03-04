@@ -1,14 +1,18 @@
 # LiteBox
 
-> An Adaptive Density Graphical Photo Browser powered by Computed HTML
+> An Adaptive Density Graphical Photo Browser written in Computed HTML
+
+
 
 ![litebox.jpg](litebox.jpg)
+
+## 
 
 ## Overview
 
 **LiteBox** is a Graphical Photo Browser that renders photos with the finest practical image detail on all devices. It does not require a SuperHD video display, but takes full advantage of one.
 
-LiteBox is written in **Computed HTML**, a programming model where the tags describing a web page are compiled in RAM and executed by the browser's HTML interpreter.
+LiteBox is written in **Computed HTML**, a programming model where the tags describing a web page are assembled in RAM and executed by the browser's HTML interpreter.
 
 LiteBox introduces **Adaptive Density**, a strategy for optimizing image quality by adjusting the download resolution for each image to match the pixel density of the screen it's being displayed on. 
 
@@ -26,17 +30,17 @@ LiteBox introduces **Adaptive Density**, a strategy for optimizing image quality
 
 * Drag the file index.html into an open browser window
 
-* Browse the source
+* Browse the source and adapt what you like to your own projects
   
   
 
 ## Computed HTML
 
-Computed HTML achieves native app performance by using **[element.innerHTML](https://developer.mozilla.org/en-US/docs/Web/API/Element/innerHTML)** as an interpreter to render layouts compiled in RAM.
+Computed HTML achieves native app performance by using **[element.innerHTML](https://developer.mozilla.org/en-US/docs/Web/API/Element/innerHTML)** as an interpreter to render 'source code' consisting of layouts compiled in RAM.
 
-It is orders of magnitude faster than conventional Dynamic HTML because instead of using JavaScript operators to build a DOM in situ, innerHTML renders a stream of layout tags which builds a DOM as a byproduct. 
+It is orders of magnitude faster than conventional Dynamic HTML because instead of using JavaScript operators to build a DOM in situ, innerHTML interprets a stream of tags which build a DOM as a byproduct of rendering the layout. 
 
-Sub-second Time-To-Interactive (TTI) is typical for Computed HTML regardless of layout complexity.
+Sub-second Time-To-Interactive (TTI) is typical for Computed HTML regardless of layout complexity. 
 
 
 
@@ -48,11 +52,11 @@ But the HTML `srcset` attribute, which allows the browser to select between pre-
 
 Adaptive Density is an algorithm that holds either the presentation size or the pixel density constant, and computes the resolution necessary to display an image that fulfills the primary constraint. The image may then be downloaded from a server capable of scaling pictures to arbitrary dimensions.  
 
-We define a **SuperHD display** to be any device with a devicePixelRatio > 1, and a **SuperHD rendition** to be any rendition on a SuperHD display in which there is a 1:1 ratio of image pixels to screen pixels.
+We define a `SuperHD display` to be any device with a devicePixelRatio > 1, and a `SuperHD rendition` to be any rendition on a SuperHD display in which there is a 1:1 ratio of image pixels to screen pixels.
 
-**Constant Size Mode** always scales photos to the presentation size, even if the browser has to upsample the image to fit. This mode is used primarily for thumbnails, because upsampling only occurs in the event that the native size of an image is smaller than the presentation size, which is a rare but possible event. 
+**Constant Area Mode** scales photos to the presentation size, even if the browser has to upsample the image to fit. This mode is used primarily for thumbnails, because upsampling only occurs in the event that the native size of an image is smaller than the presentation size, which is a rare but possible event. 
 
-**Constant Density Mode** always scales photos to the (presentation size * devicePixelRatio). It will always render an image in SuperHD on a SuperHD display, but the image dimensions may be smaller than the presentation size.
+**Constant Density Mode** scales photos to the (presentation size * devicePixelRatio). It will always render an image in SuperHD on a SuperHD display, but the image area may be smaller than the presentation size.
 
 ### notes
 
@@ -60,7 +64,7 @@ We define a **SuperHD display** to be any device with a devicePixelRatio > 1, an
 
 - Adaptive Density is a function of image resolution vs devicePixelRatio vs presentation size. This function may be applied to an image whenever the window geometry changes. The rendition may shift between SD, HD, and SuperHD as the window is resized, or the device is rotated.
 
-- None of the above applies for SD or HD displays (devicePixelRatio == 1), or *fixed size* mode when the Adaptive Density Ratio (ADR) has been decimated to 1. In that case, the image is downloaded at the presentation size, which conserves bandwidth on SD and HD devices by not downloading more image detail than the display can resolve.
+- None of the above applies for SD or HD displays (devicePixelRatio == 1), or *constant size* mode when the Adaptive Density Ratio (ADR) has been decimated to 1. In that case, the image is downloaded at the presentation size, which conserves bandwidth on SD and HD devices by not downloading more image detail than the display can resolve.
 
 
 
@@ -113,23 +117,23 @@ const catalog = [
 ```javascript
 function adaptive_density(mode, id, axis, presentation_size) {
 
-    // mode = ADR mode (1 or 2)
+    // mode = 1 (contant area) or 2 (constant density)
     // id = id of photo in catalog
     // axis = WIDTH (0) or HEIGHT (1)
-    // presentation_size = length of axis in pixels
+    // presentation_size = length of axis in density-independent pixels
 
     var
         adjusted_size,  // return value
-        adr;    // adr = adaptive density ratio (mode 1 only)
+        adr,    // adaptive density ratio (mode 1 only)
+        aspect; // width or height
 
-    mode = (dpr>1) ? mode : 1;  // force sd and hd screens to mode 1
+    mode = (dpr>1) ? mode : 1;  // force sd and hd screens to constant size mode
 
     if(mode == 1) {  // constant size mode
 
-        adr = dpr;  // dpr = devicePixelRatio
+        adr = dpr;  // devicePixelRatio
 
-        while(Math.floor(adr) > 1
-            && presentation_size * adr > catalog[id][axis]) {
+        while(Math.floor(adr) > 1  && presentation_size * adr > catalog[id][axis]) {
 
             adr -= 1;   // decimate adr
         }
@@ -138,41 +142,39 @@ function adaptive_density(mode, id, axis, presentation_size) {
 
     } else {    // constant density mode
 
-        if(axis==HEIGHT) {  // portrait
+        aspect = Math.max(catalog[id][WIDTH],catalog[id][HEIGHT]);
 
-            if(catalog[id][HEIGHT] <= presentation_size) {
+        if(aspect <= presentation_size) {
 
-                adjusted_size  = catalog[id][HEIGHT];
+            adjusted_size  = catalog[id][axis];
 
-            } else if (catalog[id][HEIGHT] / dpr <= presentation_size) {
+        } else if(aspect / dpr <= presentation_size) {
 
-                adjusted_size = Math.floor(catalog[id][HEIGHT] / dpr);
+            adjusted_size = Math.floor(catalog[id][axis] / dpr);
 
-            } else {
+        } else if(presentation_size * dpr <= catalog[id][axis]) {
 
-                adjusted_size = Math.floor(presentation_size * dpr);
-            }
+            // askeered that in some degenerate case, adaptive density 
+            // might request an upsampled photo from the server, so we 
+            // make sure the server has enough pixels to cash the 
+            // density cheque
 
-        } else { // landscape
+            adjusted_size = Math.floor(presentation_size * dpr);
 
-            if(catalog[id][WIDTH] <= presentation_size) {
+        } else {
 
-                adjusted_size  = catalog[id][WIDTH];
+            // if not, take all the pixels and let the browser fit them 
+            // to the window
 
-            } else if(catalog[id][WIDTH] / dpr <= presentation_size) {
-
-                adjusted_size = Math.floor(catalog[id][WIDTH] / dpr);
-
-            } else  {
-
-                adjusted_size = Math.floor(presentation_size * dpr);
-            }
+            adjusted_size  = catalog[id][axis];
         }
     }
 
     return adjusted_size;
 }
 ```
+
+
 
 
 
