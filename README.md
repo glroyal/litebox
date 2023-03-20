@@ -6,7 +6,7 @@
 
 ## 
 
-## Overview
+## Overview - T E S T
 
 **LiteBox** is a Photo Browser that renders photos with the finest practical image detail on all devices. It does not require a SuperHD video display, but takes full advantage of one.
 
@@ -31,8 +31,6 @@ LiteBox introduces **Adaptive Density**, a strategy for optimizing image quality
 Computed HTML achieves native app performance by using **[element.innerHTML](https://developer.mozilla.org/en-US/docs/Web/API/Element/innerHTML)** as an interpreter to render 'source code' consisting of layouts compiled in RAM.
 
 It is orders of magnitude faster than conventional Dynamic HTML. Instead of using slow and cumbersome JavaScript operators to build a DOM in situ, you assemble a batch of HTML tags, and innerHTML interprets it like a program, rendering the layout and building the DOM as it runs. 
-
-
 
 Sub-second Time-To-Interactive (TTI) is typical for Computed HTML regardless of layout complexity. 
 
