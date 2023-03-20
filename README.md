@@ -8,9 +8,9 @@
 
 ## Overview
 
-**LiteBox** is a Graphical Photo Browser that renders photos with the finest practical image detail on all devices. It does not require a SuperHD video display, but takes full advantage of one.
+**LiteBox** is a Photo Browser that renders photos with the finest practical image detail on all devices. It does not require a SuperHD video display, but takes full advantage of one.
 
-LiteBox is written in **Computed HTML**, a programming model where the tags describing a web page are assembled in RAM and executed by the browser's HTML interpreter.
+LiteBox is written in **Computed HTML**, a programming model where the tags describing a web page are assembled in RAM and submitted to the browser's HTML interpreter as a batch.
 
 LiteBox introduces **Adaptive Density**, a strategy for optimizing image quality by adjusting the download resolution for each image to match the pixel density of the screen it's being displayed on. 
 
@@ -26,13 +26,13 @@ LiteBox introduces **Adaptive Density**, a strategy for optimizing image quality
 
 * Browse the source and adapt what you like to your own projects
 
-
-
 ## Computed HTML
 
 Computed HTML achieves native app performance by using **[element.innerHTML](https://developer.mozilla.org/en-US/docs/Web/API/Element/innerHTML)** as an interpreter to render 'source code' consisting of layouts compiled in RAM.
 
-It is orders of magnitude faster than conventional Dynamic HTML because instead of using JavaScript operators to build a DOM in situ, innerHTML interprets a stream of tags which build a DOM as a byproduct of rendering the layout. 
+It is orders of magnitude faster than conventional Dynamic HTML. Instead of using slow and cumbersome JavaScript operators to build a DOM in situ, you assemble a batch of HTML tags, and innerHTML interprets it like a program, rendering the layout and building the DOM as it runs. 
+
+
 
 Sub-second Time-To-Interactive (TTI) is typical for Computed HTML regardless of layout complexity. 
 
@@ -168,8 +168,6 @@ const catalog = [
 *Unsplash ID* = URL path to the photo on [**Unsplash**](https://unsplash.com/about), an archive of free-to-use high-resolution photos
 
 *Row* = the ordinal number of the item in the catalog array
-
-
 
 ## Wisdom
 
