@@ -6,9 +6,9 @@
 
 ## 
 
-## Overview - T E S T
+## Overview
 
-**LiteBox** is a Photo Browser that renders photos with the finest practical image detail on all devices. It does not require a SuperHD video display, but takes full advantage of one.
+**LiteBox** is a dpi-aware photo browser that tries to render photos with the finest practical image detail on all devices. It does not require a SuperHD video display, but takes full advantage of one.
 
 LiteBox is written in **Computed HTML**, a programming model where the tags describing a web page are assembled in RAM and submitted to the browser's HTML interpreter as a batch.
 
