@@ -18,41 +18,46 @@
 
 // globals
 
-var
-    last_width, columns_per_row, total_gutter_width, max_img_width, render_width, gallery_width, left_offset,page_length, total_pages, page_number, column_height, last_n, start, t, pglen;
+var 
+    last_width,             
+    columns_per_row, 
+    total_gutter_width, 
+    max_img_width, 
+    render_width, 
+    gallery_width, 
+    left_offset,
+    page_length, 
+    total_pages, 
+    page_number, 
+    column_height, 
+    last_n, 
+    start, 
+    t, 
+    page_length;
 
 var
-    window_width, window_height, scrollbar_width, viewport_width;
+    window_width, 
+    window_height, 
+    scrollbar_width, 
+    viewport_width;
 
 const
-    responsive_columns = [0,0,2,2,2,2,3,3,4,4,5,5,5,5,6,6,7,7,8,8,9],
+    responsive_columns = [0, 0, 2, 2, 2, 2, 3, 3, 4, 4, 5, 5, 5, 5, 6, 6, 7, 7, 8, 8, 9],
     gutter_size = 8,
     alt_max_width = 192,
     dpr = devicePixelRatio,
-    WIDTH=0, HEIGHT=1, ID=2, AUTH=3, UNSPL=4, ROW=5, // pointers into the catalog
-    no=0, yes=1;
+    WIDTH = 0, HEIGHT = 1, ID = 2, AUTH = 3, UNSPL = 4, ROW = 5, // pointers into the catalog
+    no = 0, yes = 1;
 
 // preferences
 
 const
     PAGINATE = yes,
-
-    // LiteBox can render the entire catalog in a few milliseconds, but Lozad will obediently
-    // lazy load megabytes of images, which the user might not bother to look at. Pagination
-    // reduces bandwidth consumption by forcing the user to scroll to load more, which won't
-    // waste extravagant resources on a demonstration the user might only view once.
-
-    // Alternatively, a lazy loader that postpones download until the image is scrolled into
-    // view would allow the whole enchilada to be rendered in one go (check the lozad
-    // documentation).
-
     DOWNLOAD_LIMIT = 0; // 0 = no limit, else truncate catalog to n = DOWNLOAD_LIMIT photos
 
 if(DOWNLOAD_LIMIT) {
     catalog = catalog.slice(0,DOWNLOAD_LIMIT-1);
 }
-
-observer = lozad();
 
 
 function get_window_geometry() {
@@ -267,9 +272,9 @@ function auto_paginate() {
 
         var list = fetch_page();
 
-        pglen = list.length;
+        page_length = list.length;
 
-        if(list.length > 0) {
+        if(page_length > 0) {
 
             var adr,
                 render_height,
@@ -281,7 +286,7 @@ function auto_paginate() {
 
             // For each photo in the list,
 
-            for(i = 0; i < list.length; i++) {
+            for(i = 0; i < page_length; i++) {
 
                 // find the column with the shortest height,
 
@@ -298,10 +303,12 @@ function auto_paginate() {
                 img_height = Math.floor(aspect * img_width);
 
                 render_height = Math.floor(aspect * render_width);
+                
+                filespec = `https://picsum.photos/id/${catalog[list[i]][ID]}/${img_width}/${img_height}`;
 
                 // quality = (dpr==1) ? 'SD' : ((img_width >= render_width) ? 'SuperHD' : 'HD');
 
-                chtml[i] = `<div class="lozad brick" style="top:${
+                chtml[i] = `<img class="brick" style="top:${ 
                     column_height[j]
                 }px;left:${
                     left_offset + gutter_size + (j * (render_width + gutter_size))
@@ -309,15 +316,9 @@ function auto_paginate() {
                     render_width
                 }px;height:${
                     render_height
-                }px;background-image:url('https://picsum.photos/id/${
-                    catalog[list[i]][ID]
-                }/${
-                    img_width   //Math.floor(render_width * adr)
-                }/${
-                    img_height  //Math.floor(render_height * adr)
-                }');" onclick="lightbox_open(${
+                }px;" src="${ filespec }" loading=lazy onclick="lightbox_open(${
                     list[i]
-                });"></div>`; // <div class="brick-id"></div>
+                });">`; // <div class="brick-id"></div>
 
                 // adjust the column height and continue with the next picture
 
@@ -329,10 +330,6 @@ function auto_paginate() {
             el = document.createElement('div');
             el.innerHTML = chtml.join('');
             $('gallery').appendChild(el);
-
-            // and lazy-load the photos
-
-            observer.observe();
         }
     }
 }
@@ -433,7 +430,7 @@ function onScroll() {
             var start = Date.now();
             auto_paginate();
             var t = Date.now() - start;
-            var fred = `scroll: ${pglen} thumbs in ${t} ms = ~${
+            var fred = `scroll: ${page_length} thumbs in ${t} ms = ~${
                 (Math.ceil(1000/t) * catalog.length).toLocaleString()
             } thumbs/sec`
             console.log(fred);
@@ -490,7 +487,7 @@ document.addEventListener("DOMContentLoaded", function(){
     var start = Date.now();
     auto_paginate();
     var t = Date.now() - start;
-    var fred = `init: ${pglen} thumbs in ${t} ms = ~${
+    var fred = `init: ${page_length} thumbs in ${t} ms = ~${
             (Math.ceil(1000/t) * catalog.length).toLocaleString()
         } thumbs/sec`
     console.log(fred);
