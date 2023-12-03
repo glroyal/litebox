@@ -60,6 +60,262 @@ if(DOWNLOAD_LIMIT) {
 }
 
 
+function $(el) {
+
+    // that handy $('foo') shortcut thing
+
+    try {
+        return (typeof el == 'string') ? document.getElementById(el) : el;
+    } catch (e) {
+        if (debug) {
+            alert(el);
+        }
+    }
+}
+
+
+function adaptive_density(mode, id, axis, presentation_size) {
+
+    // mode = 1 (contant area) or 2 (constant density)
+    // id = id of photo in catalog
+    // axis = WIDTH (0) or HEIGHT (1)
+    // presentation_size = length of axis in density-independent pixels
+
+    var
+        adjusted_size,  // return value
+        adr,    // adaptive density ratio (mode 1 only)
+        aspect; // width or height
+
+    mode = (dpr>1) ? mode : 1;  // force sd and hd screens to constant area mode
+
+    if(mode == 1) {  // constant area mode
+
+        adr = dpr;  // devicePixelRatio
+
+        while(Math.floor(adr) > 1  && presentation_size * adr > catalog[id][axis]) {
+
+            adr -= 1;   // decimate adr
+        }
+
+        adjusted_size = Math.floor(presentation_size * adr);
+
+    } else {    // constant density mode
+
+        aspect = Math.max(catalog[id][WIDTH],catalog[id][HEIGHT]);
+
+        if(aspect <= presentation_size) {
+
+            adjusted_size  = catalog[id][axis];
+
+        } else if(aspect / dpr <= presentation_size) {
+
+            adjusted_size = Math.floor(catalog[id][axis] / dpr);
+
+        } else if(presentation_size * dpr <= catalog[id][axis]) {
+
+            // askeered that in some degenerate case, adaptive density might
+            // request an upsampled photo from the server, so we make sure
+            // the server has enough pixels to cash the density cheque
+
+            adjusted_size = Math.floor(presentation_size * dpr);
+
+        } else {
+
+            // if not, take all the pixels and let the browser fit them
+            // to the window
+
+            adjusted_size  = catalog[id][axis];
+        }
+    }
+
+    return adjusted_size;
+}
+
+
+function lightbox_open(n) { // n = ROW
+
+    // Show the selected photo in an overlay window
+
+    var
+        img_width,
+        img_height,
+        img_src,
+        aspect = catalog[n][WIDTH] / catalog[n][HEIGHT],
+        vumode;
+
+    if(aspect<1) {
+
+        // portrait
+        img_height = adaptive_density(2,n,HEIGHT,window_height);
+        img_width = Math.floor(aspect * img_height);
+
+        vumode = (img_height>window_height) ? 'SuperHD' : ((img_height<720)? 'SD' : 'HD');
+
+    } else {
+
+        // landscape
+        img_width = adaptive_density(2,n,WIDTH,window_width);
+        img_height = Math.floor(img_width / aspect);
+
+        vumode = (img_width>window_width) ? 'SuperHD' : ((img_width<1280)? 'SD' : 'HD');
+
+    }
+
+    $('nfobox').style.top = (window_height-260)/2 + 'px';
+    $('nfobox').style.left = (window_width-260)/2 + 'px';
+
+    $('nfobox').innerHTML = `
+        <table>
+            <tr><td class="stub">Picsum ID:</td><td class="col">#&thinsp;${catalog[n][ID]}</td></tr>
+            <tr><td class="stub">Author:</td><td class="col"><a href="https://unsplash.com/photos/${catalog[n][UNSPL]}" target="_blank">${authors[catalog[n][AUTH]]}</a></td></tr>
+            <tr><td class="stub">Catalog:</td><td class="col">${catalog[n][WIDTH]+'&thinsp;x&thinsp;'+catalog[n][HEIGHT]}</td></tr>
+            <tr><td class="stub">Window:</td><td class="col">${window_width}&thinsp;x&thinsp;${window_height}</td></tr>
+            <tr><td class="stub">Render:</td><td class="col">${img_width + '&thinsp;x&thinsp;' + img_height}</td></tr>
+            <tr><td class="stub">Density:</td><td class="col">${vumode}</td></tr>
+        </table>`;
+
+    $('img01').src = `https://picsum.photos/id/${catalog[n][ID]}/${img_width}/${img_height}`;
+
+    $('lightbox').style.display = 'block';
+    $('menu').style.visibility = 'visible';
+    $('nfobox').style.visibility = 'hidden';
+
+    last_n = n;
+}
+
+
+function lightbox_close() {
+
+    nfobox_close();
+    $('img01').src = "1x1.gif";
+    $('menu').style.visibility = 'hidden';
+    $('lightbox').style.display = 'none';
+}
+
+
+function nfobox_toggle() {
+
+    if($('nfobox').style.visibility == 'hidden') {
+        $('nfobox').style.visibility = 'visible';
+    } else {
+        $('nfobox').style.visibility = 'hidden';
+    }
+}
+
+
+function nfobox_close() {
+
+    if($('nfobox').style.visibility == 'visible') {
+        $('nfobox').style.visibility = 'hidden';
+    }
+}
+
+
+function fetch_page() {
+
+    // fetch the next page from the catalog
+
+    var ll, rr;
+
+    if(page_number < total_pages) {
+
+        ll = (page_number * page_length), rr = ll + page_length - 1;
+
+        return catalog.slice(ll, rr).map(function(value,index) {
+            return value[ROW];
+        });
+
+    } else {
+        return [];
+    }
+}
+
+
+function auto_paginate() {
+
+    // stream a page of thumbnails to the browser
+
+    if(total_pages > 0) {
+
+        var page = fetch_page();
+
+        page_length = page.length;
+
+        if(page_length > 0) {
+
+            var adr,
+                render_height,
+                image,
+                i, // current image
+                j, // current column
+                chtml = [],
+                el;
+
+            // For each photo in the page,
+
+            for(i = 0; i < page_length; i++) {
+
+                // find the column with the shortest height,
+
+                j = column_height.indexOf(Math.min(...column_height)),
+
+                // compute the adaptive density ratio,
+
+                img_width = adaptive_density(1, page[i], WIDTH, render_width);
+
+                // and compile a thumbnail image.
+
+                aspect = catalog[page[i]][HEIGHT] / catalog[page[i]][WIDTH];
+
+                img_height = Math.floor(aspect * img_width);
+
+                render_height = Math.floor(aspect * render_width);
+                
+                filespec = `https://picsum.photos/id/${catalog[page[i]][ID]}/${img_width}/${img_height}`;
+
+                // quality = (dpr==1) ? 'SD' : ((img_width >= render_width) ? 'SuperHD' : 'HD');
+
+                chtml[i] = `<img class="brick" style="top:${ 
+                    column_height[j]
+                }px;left:${
+                    left_offset + gutter_size + (j * (render_width + gutter_size))
+                }px;width:${
+                    render_width
+                }px;height:${
+                    render_height
+                }px;" src="${ filespec }" loading=lazy onclick="lightbox_open(${
+                    page[i]
+                });">`; // <div class="brick-id"></div>
+
+                // adjust the column height and continue with the next picture
+
+                column_height[j] += render_height + gutter_size;
+            }
+
+            // submit the page of thumbnails to the HTML interpreter
+
+            el = document.createElement('div');
+            el.innerHTML = chtml.join('');
+            $('gallery').appendChild(el);
+        }
+    }
+}
+
+
+function onScroll() {
+
+    if(page_number >= 0) {
+
+        if($('pga').scrollHeight - $('pga').scrollTop - $('pga').clientHeight < 1) {
+
+            page_number++;
+            page_number = (page_number>(total_pages-1)) ? -1 : page_number;
+            auto_paginate();
+        }
+    }
+}
+
+
 function get_window_geometry() {
 
     window_width = function() {
@@ -141,7 +397,7 @@ function init() {
 
 function debounce(func) {
 
-    // pause execution while window is being dragged
+    // pause execution if window is being resized
 
     var timer;
 
@@ -172,276 +428,10 @@ window.addEventListener("resize",debounce(function(e){
 }));
 
 
-function $(el) {
-
-    // that handy $('foo') shortcut thing
-
-    try {
-        return (typeof el == 'string') ? document.getElementById(el) : el;
-    } catch (e) {
-        if (debug) {
-            alert(el);
-        }
-    }
-}
-
-
-function fetch_page() {
-
-    // fetch the next page from the catalog
-
-    var ll, rr;
-
-    if(page_number < total_pages) {
-
-        ll = (page_number * page_length), rr = ll + page_length - 1;
-
-        return catalog.slice(ll, rr).map(function(value,index) {
-            return value[ROW];
-        });
-
-    } else {
-        return [];
-    }
-}
-
-
-function adaptive_density(mode, id, axis, presentation_size) {
-
-    // mode = 1 (contant area) or 2 (constant density)
-    // id = id of photo in catalog
-    // axis = WIDTH (0) or HEIGHT (1)
-    // presentation_size = length of axis in density-independent pixels
-
-    var
-        adjusted_size,  // return value
-        adr,    // adaptive density ratio (mode 1 only)
-        aspect; // width or height
-
-    mode = (dpr>1) ? mode : 1;  // force sd and hd screens to constant area mode
-
-    if(mode == 1) {  // constant area mode
-
-        adr = dpr;  // devicePixelRatio
-
-        while(Math.floor(adr) > 1  && presentation_size * adr > catalog[id][axis]) {
-
-            adr -= 1;   // decimate adr
-        }
-
-        adjusted_size = Math.floor(presentation_size * adr);
-
-    } else {    // constant density mode
-
-        aspect = Math.max(catalog[id][WIDTH],catalog[id][HEIGHT]);
-
-        if(aspect <= presentation_size) {
-
-            adjusted_size  = catalog[id][axis];
-
-        } else if(aspect / dpr <= presentation_size) {
-
-            adjusted_size = Math.floor(catalog[id][axis] / dpr);
-
-        } else if(presentation_size * dpr <= catalog[id][axis]) {
-
-            // askeered that in some degenerate case, adaptive density might
-            // request an upsampled photo from the server, so we make sure
-            // the server has enough pixels to cash the density cheque
-
-            adjusted_size = Math.floor(presentation_size * dpr);
-
-        } else {
-
-            // if not, take all the pixels and let the browser fit them
-            // to the window
-
-            adjusted_size  = catalog[id][axis];
-        }
-    }
-
-    return adjusted_size;
-}
-
-
-function auto_paginate() {
-
-    // stream a page of thumbnails to the browser
-
-    if(total_pages > 0) {
-
-        var list = fetch_page();
-
-        page_length = list.length;
-
-        if(page_length > 0) {
-
-            var adr,
-                render_height,
-                image,
-                i, // current image
-                j, // current column
-                chtml = [],
-                el;
-
-            // For each photo in the list,
-
-            for(i = 0; i < page_length; i++) {
-
-                // find the column with the shortest height,
-
-                j = column_height.indexOf(Math.min(...column_height)),
-
-                // compute the adaptive density ratio,
-
-                img_width = adaptive_density(1, list[i], WIDTH, render_width);
-
-                // and compile a thumbnail div.
-
-                aspect = catalog[list[i]][HEIGHT] / catalog[list[i]][WIDTH];
-
-                img_height = Math.floor(aspect * img_width);
-
-                render_height = Math.floor(aspect * render_width);
-                
-                filespec = `https://picsum.photos/id/${catalog[list[i]][ID]}/${img_width}/${img_height}`;
-
-                // quality = (dpr==1) ? 'SD' : ((img_width >= render_width) ? 'SuperHD' : 'HD');
-
-                chtml[i] = `<img class="brick" style="top:${ 
-                    column_height[j]
-                }px;left:${
-                    left_offset + gutter_size + (j * (render_width + gutter_size))
-                }px;width:${
-                    render_width
-                }px;height:${
-                    render_height
-                }px;" src="${ filespec }" loading=lazy onclick="lightbox_open(${
-                    list[i]
-                });">`; // <div class="brick-id"></div>
-
-                // adjust the column height and continue with the next picture
-
-                column_height[j] += render_height + gutter_size;
-            }
-
-            // submit the page of thumbnails to the HTML interpreter
-
-            el = document.createElement('div');
-            el.innerHTML = chtml.join('');
-            $('gallery').appendChild(el);
-        }
-    }
-}
-
-
-function nfobox_close() {
-
-    if($('nfobox').style.visibility == 'visible') {
-        $('nfobox').style.visibility = 'hidden';
-    }
-}
-
-
-function nfobox_toggle() {
-
-    if($('nfobox').style.visibility == 'hidden') {
-        $('nfobox').style.visibility = 'visible';
-    } else {
-        $('nfobox').style.visibility = 'hidden';
-    }
-}
-
-
-function lightbox_close() {
-
-    nfobox_close();
-    $('img01').src = "1x1.gif";
-    $('menu').style.visibility = 'hidden';
-    $('lightbox').style.display = 'none';
-}
-
-
-function lightbox_open(n) { // n = ROW
-
-//    get_window_geometry();
-
-    // Show the selected photo in an overlay window
-
-    var
-        img_width,
-        img_height,
-        img_src,
-        aspect = catalog[n][WIDTH] / catalog[n][HEIGHT],
-        vumode;
-
-    // console.log('render');
-
-    if(aspect<1) {
-
-        // portrait
-        img_height = adaptive_density(2,n,HEIGHT,window_height);
-        img_width = Math.floor(aspect * img_height);
-
-        vumode = (img_height>window_height) ? 'SuperHD' : ((img_height<720)? 'SD' : 'HD');
-
-    } else {
-
-        // landscape
-        img_width = adaptive_density(2,n,WIDTH,window_width);
-        img_height = Math.floor(img_width / aspect);
-
-        vumode = (img_width>window_width) ? 'SuperHD' : ((img_width<1280)? 'SD' : 'HD');
-
-    }
-
-    $('nfobox').style.top = (window_height-260)/2 + 'px';
-    $('nfobox').style.left = (window_width-260)/2 + 'px';
-
-    $('nfobox').innerHTML = `
-        <table>
-            <tr><td class="stub">Picsum ID:</td><td class="col">#&thinsp;${catalog[n][ID]}</td></tr>
-            <tr><td class="stub">Author:</td><td class="col"><a href="https://unsplash.com/photos/${catalog[n][UNSPL]}" target="_blank">${authors[catalog[n][AUTH]]}</a></td></tr>
-            <tr><td class="stub">Catalog:</td><td class="col">${catalog[n][WIDTH]+'&thinsp;x&thinsp;'+catalog[n][HEIGHT]}</td></tr>
-            <tr><td class="stub">Window:</td><td class="col">${window_width}&thinsp;x&thinsp;${window_height}</td></tr>
-            <tr><td class="stub">Render:</td><td class="col">${img_width + '&thinsp;x&thinsp;' + img_height}</td></tr>
-            <tr><td class="stub">Density:</td><td class="col">${vumode}</td></tr>
-        </table>`;
-
-    $('img01').src = `https://picsum.photos/id/${catalog[n][ID]}/${img_width}/${img_height}`;
-
-    $('lightbox').style.display = 'block';
-    $('menu').style.visibility = 'visible';
-    $('nfobox').style.visibility = 'hidden';
-
-    last_n = n;
-}
-
-function onScroll() {
-
-    if(page_number >= 0) {
-
-        if($('pga').scrollHeight - $('pga').scrollTop - $('pga').clientHeight < 1) {
-
-            page_number++;
-            // page_number = (page_number>(total_pages-1)) ? total_pages-1 : page_number;
-            page_number = (page_number>(total_pages-1)) ? -1 : page_number;
-
-            var start = Date.now();
-            auto_paginate();
-            var t = Date.now() - start;
-            var fred = `scroll: ${page_length} thumbs in ${t} ms = ~${
-                (Math.ceil(1000/t) * catalog.length).toLocaleString()
-            } thumbs/sec`
-            console.log(fred);
-            //$('rspeed').innerHTML=fred;
-        }
-    }
-}
-
-// And Here We Go
+// And Here. We. Go.
 
 get_window_geometry();
+
 init();
 
 document.addEventListener("DOMContentLoaded", function(){
@@ -484,15 +474,5 @@ document.addEventListener("DOMContentLoaded", function(){
 
     // fetch and render the first page
 
-    var start = Date.now();
     auto_paginate();
-    var t = Date.now() - start;
-    var fred = `init: ${page_length} thumbs in ${t} ms = ~${
-            (Math.ceil(1000/t) * catalog.length).toLocaleString()
-        } thumbs/sec`
-    console.log(fred);
-    //$('rspeed').innerHTML=fred;
 });
-
-
-
