@@ -273,8 +273,6 @@ function auto_paginate() {
                 
                 filespec = `https://picsum.photos/id/${catalog[page[i]][ID]}/${img_width}/${img_height}`;
 
-                // quality = (dpr==1) ? 'SD' : ((img_width >= render_width) ? 'SuperHD' : 'HD');
-
                 chtml[i] = `<img class="brick" style="top:${ 
                     column_height[j]
                 }px;left:${
@@ -292,7 +290,7 @@ function auto_paginate() {
                 column_height[j] += render_height + gutter_size;
             }
 
-            // submit the page of thumbnails to the HTML interpreter
+            // submit the page to the HTML interpreter
 
             el = document.createElement('div');
             el.innerHTML = chtml.join('');
