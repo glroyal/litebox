@@ -428,18 +428,20 @@ window.addEventListener("resize",debounce(function(e){
 
 // And Here. We. Go.
 
-get_window_geometry();
-
-init();
-
 document.addEventListener("DOMContentLoaded", function(){
 
+    get_window_geometry();
+
+    init();
+
     // render the user interface
+
+    var icon_pad = 16; // Math.floor((viewport_width - gallery_width)/2) - 16;
 
     $('form1').innerHTML = `
     <div id="browser">
         <header>
-            <nav class="left">
+            <nav class="left" style="padding:0 ${icon_pad}px 0 ${icon_pad}px;">
                 <span class="material-icons md-24 md-light md-inactive">menu</span>
             </nav>
             <nav id="rspeed"></nav>
@@ -466,7 +468,7 @@ document.addEventListener("DOMContentLoaded", function(){
     if(PAGINATE) {
 
         // fetch and render the next page on scroll
-
+        
         $('pga').addEventListener("scroll", onScroll);
     }
 

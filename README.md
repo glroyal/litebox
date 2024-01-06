@@ -8,9 +8,9 @@
 
 ## Overview
 
-**LiteBox** is a dpi-aware photo browser that tries to render photos with the finest practical image detail on all devices. It does not require a SuperHD video display, but takes full advantage of one.
+**LiteBox** is a dpi-aware media browser that tries to render photos with the finest practical image detail on all devices. It does not require a SuperHD video display, but takes full advantage of one if available.
 
-LiteBox is written in **Computed HTML**, a programming model where the tags describing a web page are assembled in RAM and submitted to the browser's HTML interpreter as a batch.
+LiteBox is written in **Computed HTML**, a programming model where the tags describing a web page are assembled in RAM and evaluated by the browser's HTML interpreter.
 
 LiteBox introduces **Adaptive Density**, a strategy for optimizing image quality by adjusting the download resolution for each image to match the pixel density of the screen it's being displayed on. 
 
@@ -158,8 +158,6 @@ const catalog = [
     [3872,2592,348,40,"mVhd5QVlDWw",892]
 ];
 ```
-
-*Width, Height, Picsum ID* = data to access the photo
 
 *Author ID* = Index of the author's name in the author table for photo credit
 
