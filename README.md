@@ -10,7 +10,7 @@
 
 **LiteBox** is a dpi-aware media browser that tries to render photos with the finest practical image detail on all devices. It does not require a SuperHD video display, but takes full advantage of one if available.
 
-LiteBox is written in **Computed HTML**, a programming model where the tags describing a web page are assembled in RAM and evaluated by the browser's HTML interpreter.
+LiteBox is written in **Computed HTML**, a programming model where the tags describing a web page are assembled in RAM and rendered by the browser's HTML interpreter at high speed.
 
 LiteBox introduces **Adaptive Density**, a strategy for optimizing image quality by adjusting the download resolution for each image to match the pixel density of the screen it's being displayed on. 
 
