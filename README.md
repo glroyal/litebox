@@ -16,11 +16,9 @@ LiteBox introduces **Adaptive Density**, a strategy for optimizing image quality
 
 ## Getting Started
 
-* [**View the Live Demo**](%5BLiteBox%5D(https://glroyal.github.io/litebox/)) on your PC, notebook, phone and tablet, or
+* [**View the Live Demo**](https://glroyal.github.io/litebox/) on your PC, notebook, phone and tablet, or
 
-* Clone or download the repo
-
-* Drag the file index.html into an open browser window
+* Clone or download the repo, and drag the file index.html into an open browser window, then
 
 * Browse the source and adapt what you like to your own projects
 
