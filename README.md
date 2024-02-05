@@ -10,7 +10,7 @@
 
 **LiteBox** is a dpi-aware media browser that tries to render photos with the finest practical image detail on all devices. It does not require a SuperHD video display, but takes full advantage of one if available.
 
-LiteBox is written in **Computed HTML**, a programming model where the tags describing a web page are assembled in RAM and rendered by the browser's HTML interpreter at high speed.
+LiteBox is a written in **Computed HTML**, a programming model where the tags describing a web page are assembled in RAM and rendered by the browser's HTML interpreter at high speed.
 
 LiteBox introduces **Adaptive Density**, a strategy for optimizing image quality by adjusting the download resolution for each image to match the pixel density of the screen it's being displayed on. 
 
@@ -28,15 +28,17 @@ LiteBox introduces **Adaptive Density**, a strategy for optimizing image quality
 
 ## Computed HTML
 
-Computed HTML achieves native app performance by using **[element.innerHTML](https://developer.mozilla.org/en-US/docs/Web/API/Element/innerHTML)** as an interpreter to render 'source code' consisting of layouts compiled in RAM.
+Computed HTML (CHTML) is a method for developing arbitrarily complex web applications in JavaScript, independent of any framework or library.
 
-It is orders of magnitude faster than conventional Dynamic HTML. Instead of using slow and cumbersome JavaScript operators to build a DOM in situ, you assemble a batch of HTML tags, and innerHTML interprets it like a program, rendering the layout and building the DOM as it runs. 
+CHTML compiles document layouts in RAM and pushes them through the browser's HTML interpreter, which renders the layout in a single pass. 
 
-Sub-second Time-To-Interactive (TTI) is typical for Computed HTML regardless of layout complexity. 
+Because all necessary attributes are specified, the browser never has to backtrack or repaint. The user interface is rendered instantly, and becomes interactive in less than a second regardless of layout complexity. 
+
+CHTML is orders of magnitude faster than conventional Dynamic HTML (DHTML).
 
 ## Adaptive Density
 
-It is axiomatic that people who buy SuperHD computers, tablets, and phones expect to browse SuperHD websites. 
+It is axiomatic that people who buy SuperHD computers, tablets, and phones would enjoy browsing SuperHD websites. 
 
 But the HTML `srcset` attribute, which allows the browser to select between pre-rendered images, is not suitable for large, heterogenous, or dynamic media collections. 
 
@@ -44,7 +46,7 @@ Adaptive Density is an algorithm that holds either the presentation size or the 
 
 We define a `SuperHD display` to be any device with a devicePixelRatio > 1, and a `SuperHD rendition` to be any rendition on a SuperHD display in which there is a 1:1 ratio of image pixels to screen pixels.
 
-**Constant Area Mode** scales photos to the presentation size, even if the browser has to upsample the image to fit. This mode is used primarily for thumbnails, because upsampling only occurs in the event that the native size of an image is smaller than the presentation size, which is a rare but possible event. 
+**Constant Area Mode** scales photos to the presentation size, even if the browser has to upsample the image to fit. This mode is used primarily for thumbnails, because upsampling only occurs in the event that the native size of an image is smaller than the presentation size, which is rare. 
 
 **Constant Density Mode** scales photos to the (presentation size * devicePixelRatio). It will always render an image in SuperHD on a SuperHD display, but the image area may be smaller than the presentation size.
 
@@ -95,11 +97,10 @@ function adaptive_density(mode, id, axis, presentation_size) {
 
     if(mode == 1) {  // constant area mode
 
-        adr = dpr;  // devicePixelRatio
+        adr = devicePixelRatio;  
 
-        while(Math.floor(adr) > 1  
-            && presentation_size * adr > catalog[id][axis]) {
-
+        while(Math.floor(adr) > 1 
+            && presentation_size * adr > catalog[id][axis]) {
             adr -= 1;   // decimate adr
         }
 
