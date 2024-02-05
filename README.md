@@ -10,15 +10,13 @@
 
 **LiteBox** is a dpi-aware media browser that tries to render photos with the finest practical image detail on all devices. It does not require a SuperHD video display, but takes full advantage of one if available.
 
-LiteBox is a written in **Computed HTML**, a programming model where the tags describing a web page are assembled in RAM and rendered by the browser's HTML interpreter at high speed.
+LiteBox is a written in **Computed HTML**, a programming model where the tags describing a web page are assembled in JavaScript and rendered by the browser's HTML interpreter. 
 
 LiteBox introduces **Adaptive Density**, a strategy for optimizing image quality by adjusting the download resolution for each image to match the pixel density of the screen it's being displayed on. 
 
-## You're Soaking In It
+## Getting Started
 
-[**View the Live Demo**](https://glroyal.github.io/litebox/) on your dektop, notebook, tablet and phone. 
-
-## Make It Yours
+* [**View the Live Demo**](%5BLiteBox%5D(https://glroyal.github.io/litebox/)) on your PC, notebook, phone and tablet, or
 
 * Clone or download the repo
 
@@ -28,17 +26,15 @@ LiteBox introduces **Adaptive Density**, a strategy for optimizing image quality
 
 ## Computed HTML
 
-Computed HTML (CHTML) is a method for developing arbitrarily complex web applications in JavaScript, independent of any framework or library.
+Computed HTML (CHTML) is a method for developing arbitrarily complex web applications in JavaScript, independent of any framework or library. CHTML is orders of magnitude faster than conventional Dynamic HTML (DHTML).
 
-CHTML compiles document layouts in RAM and pushes them through the browser's HTML interpreter, which renders the layout in a single pass. 
+CHTML uses JavaScript to compile a document layout in RAM and pushes it through the browser's HTML interpreter, which renders the layout in a single pass. 
 
 Because all necessary attributes are specified, the browser never has to backtrack or repaint. The user interface is rendered instantly, and becomes interactive in less than a second regardless of layout complexity. 
 
-CHTML is orders of magnitude faster than conventional Dynamic HTML (DHTML).
-
 ## Adaptive Density
 
-It is axiomatic that people who buy SuperHD computers, tablets, and phones would enjoy browsing SuperHD websites. 
+Most people who buy SuperHD computers, tablets, and phones would enjoy browsing websites that take advantage of that fancy hardware, but every brand and model of video display has a different size, resolution, and pixel density. 
 
 But the HTML `srcset` attribute, which allows the browser to select between pre-rendered images, is not suitable for large, heterogenous, or dynamic media collections. 
 
@@ -165,6 +161,8 @@ const catalog = [
 *Unsplash ID* = URL path to the photo on [**Unsplash**](https://unsplash.com/about), an archive of free-to-use high-resolution photos
 
 *Row* = the ordinal number of the item in the catalog array
+
+## Inspiration
 
 ## Wisdom
 
